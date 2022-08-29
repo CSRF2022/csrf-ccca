@@ -1,8 +1,8 @@
 # csrf-ccca
 
-PI: Robyn Forrest (Pacific Biological Station)
+**PI:** Robyn Forrest (Pacific Biological Station)
 
-co_PI: Philina English (Pacific Biological Station)
+**co-PI:** Philina English (Pacific Biological Station)
 
 A project to explore climate change conditioned advice for Pacific fisheries for the 2022 CSRF project:
 

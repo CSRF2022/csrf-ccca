@@ -70,7 +70,8 @@ Fstrat= F.strategy(PB, 2014:2018, moratorium=F)
 # greater than the objective after the specified time range.
 
 Bproj= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj, Fstrat, K=K, theta=1)
-Fout= Fseq.f(PB,PBproj=PBproj,Fseq=fs,time.frame=time.frame, N=N, K=K)
+# RF had to add Bstart.mult and theta arguments to below
+Fout= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
 PofF= PofF.f(PB,Fout,ref.pt=ref.pt)
 
 # Summarise the output of the projections by calculating quantiles and
