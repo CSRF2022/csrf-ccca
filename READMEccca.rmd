@@ -252,7 +252,7 @@ lines(Evar, lwd=2,col="green")
 ```
 
 
-The distribution of the P/B values for the future projections. It is the P/B that results by sampling E distribution function to simulate a future climate and while altering the mean and variance if desired. The P/B distribution is then deermined by running sampled E value through the fitted P/B vs E relationship.
+The distribution of the P/B values for the future projections. It is the P/B that results by sampling E distribution function to simulate a future climate and while altering the mean and variance if desired. The P/B distribution is then determined by running sampled E value through the fitted P/B vs E relationship.
 ```{r PBprojplot, echo=FALSE,fig.cap="Figure 6: the P/B distributions used in projections for the different climate scenarios. Black is the baseline where the temperature distribution was fitted to all years; red is shift in the mean 0.5 C warmer than the baseline; blue line is 0.5 C colder than the baseline; green line has the same mean as the baseline but a 50% increase in standard deviation"}
 plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey")
 lines(density(PBproj.cold),lwd=2,col="blue")
