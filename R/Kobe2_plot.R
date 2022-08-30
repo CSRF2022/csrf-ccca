@@ -1,0 +1,38 @@
+#' param PB the data and model fit coming from applying the PB model (PB.f)
+#' param E the time series to overlay and colour code Kobe years
+#' param Bref.multiplier a multiplier of the mean B in the reference period to adjust it to a specific reference point value
+#' param col1 the colour at lowest value
+#' param col2 the colour at the highest value
+#' param ... par options for plot
+#' keywords Kobe, reference point, Bmsy, environment
+#' export
+#' examples
+#' Kobe.f(PB=PB,E=PB$E)
+#'
+#' SAME AS THE CCCA Kobe.f plot but without the legend
+
+Kobe2.f= function(PB, E, Bref.multiplier=1, col1="blue", col2="red", ...){
+
+  Year= PB$Year
+  F.rel= PB$F.rel
+  Index.q= PB$Index.q
+  base= PB$refererence.years==1
+  E.kobe= E/mean(E[base])
+  F.kobe= F.rel/mean(F.rel[base])
+  B.kobe= Index.q*Bref.multiplier/mean(Index.q[base])
+
+  plot(B.kobe,F.kobe,type="b",pch="    ",xlab=expression("B/B"["base"]),ylab=expression("F/F"["base"]),...)
+  E.categ= floor(E*4)/4 #quarter degree C categories
+  tempcol=colorRampPalette(c(col1, col2))(length(E.kobe))
+  temperaturecolours= tempcol[order(E.categ)]
+  last.year= length(F.kobe)
+  points(B.kobe,F.kobe,pch=21,bg=temperaturecolours,col=temperaturecolours,cex=1)
+  points(B.kobe[1],F.kobe[1],pch=21,bg=temperaturecolours[1],col=temperaturecolours[1],cex=3)
+  text(B.kobe[1],F.kobe[1],PB$Year[1],col="white",cex=0.55,font=2)
+  points(B.kobe[last.year],F.kobe[last.year],pch=21,bg=temperaturecolours[last.year],col=temperaturecolours[last.year],cex=3)
+  text(B.kobe[last.year],F.kobe[last.year],PB$Year[last.year],col="white",cex=0.55,font=2)
+  abline(h=1,col="grey")
+  abline(v=1,col="grey")
+  #legend("topright",bty="n",cex=0.7,legend=c(paste0("Bbase=",round(B.kobe),
+  #                                                  paste0("Fbase=",round(F.kobe,3)))))
+}

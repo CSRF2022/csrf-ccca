@@ -37,10 +37,100 @@ matplot(ncod$Year, cbind(ncod$Index,ncod$Catch),type="l",lty=c(1,1),lwd=2,xlab="
 yaxis2.f(ncod$Year, ncod$E,ylabel=expression('Temperature ('^o*C*')'),type="l",cex=1.1,lwd=2,lty=1,col="red")
 legend("topleft",bty="n",legend=c("Survey","Catch","Temperature"),lwd=2,lty=c(1),cex=0.7,col=c("black","green","red"))
 
+# =========================================================================
 # Determine the annual P/B ratio of the population creating a
 # dataframe with the index bumped by q
 
+# What does the PB.f function do?
+# A simple index of abundance inflated by dividing by q
+# Relative F is determined by dividing catch by inflated index
+
+# COULD USE BIOMASS SERIES FROM A STOCK ASSESSMENT
+# OR POSSIBLY Q FROM STOCK ASSESSMENT - see if scale is important
+
 PB= PB.f(turbot, ref.years=ref.years, q=q)
 
+View(PB)
 
+# Recreate what the function does
+# ref.years and q are from the parameter dataset
+ref.years
+q
+
+Indexq <- turbot$Index/q
+Indexq # q is 1 in this case
+
+# Simple surplus production function
+# Pt = It+1 - It + Ct
+
+# The diff function simply calculates Indexq+1 - Indexq
+PB2 <- (diff(Indexq)+turbot$Catch[-length(turbot$Catch)])/Indexq[-length(Indexq)]
+PB$PB
+
+# Long version
+PB3 <- vector(length=length(turbot$Catch)-1)
+for(i in seq_along(PB3)) {
+  P <- Indexq[i+1] - Indexq[i] + turbot$Catch[i]
+  PB3[i] <- P/Indexq[i]
+}
+
+PBcompare <- cbind(PB2,PB3)
+PBcompare #matches
+
+# Kobe plot of PB vs E
+ # I don't understand the legend of the ccca plot
+ # Make a new version in this repo without it (Kobe2.f)
+# colours are the value of the environmental variable
+# TODO: Maybe add the years as well
+Kobe2.f(PB=PB,E=PB$E)
+colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.5, 3.5, 2.7, 4.5)
+
+#=========================================================================
+
+# Fit a relationship between the P/B and the E variable
+#   according to what you selected in params
+PvsE= PBE.fit.f(PB,model.type=model.type, knots=knots, poly.degree=poly.degree)
+model.type
+knots
+poly.degree
+
+View(PvsE)
+
+# What does the PBE.fit.f function do?
+
+# this might be the fun part
+# model.type = the kind of model to fit ("poly", "gam", "gam.adaptive","avg","mpi","mpd","cx","cv","micx","micv","mdcx","mdcv","custom")
+# knots = the number of knots for adaptive GAM
+# poly.degree = the degree of the polynomial to fit
+# custom.type = the type of model (ie. gam , scam , or lm) to use in custom model
+# formula = the formula to use in custom model
+
+# Function description:
+# The various model fits: polynomial "poly", GAM "gam", adaptive GAM "gam.adaptive", various scam fits
+#     and resamples from the PB values "avg" can be chosen. avg just fits a linear model with slope = 0
+#     and then resamples the residuals which is effectively the same as just sampling the P/B values directly,
+#     i.e. it does not force a relationship between P/B and E and therefore the future is just a resampling
+#     of the past. scam (shape constrained additive models) fits force certain characteristics in the shape such as monotonicity,
+#     convex, concave, increasing or decreasing.
+
+# PBE.fit.f= function(PB , model.type, knots = NULL , poly.degree = NULL , custom.type = NULL , formula = NULL ){
+#   PB=na.omit(PB)
+#   switch(model.type,
+#          poly= lm(PB~poly(E,degree=poly.degree),data= PB),
+#          gam= gam(PB~s(E), data=PB),
+#          gam.adaptive= gam(PB~s(E,k=knots,bs="ad"), data=PB),
+#          mpi= scam(PB~s(E, bs="mpi"),data=PB),
+#          mpd= scam(PB~s(E, bs="mpd"),data=PB),
+#          cx= scam(PB~s(E, bs="cx"),data=PB),
+#          cv= scam(PB~s(E, bs="cv"),data=PB),
+#          micx= scam(PB~s(E, bs="micx"),data=PB),
+#          micv= scam(PB~s(E, bs="micv"),data=PB),
+#          mdcx= scam(PB~s(E, bs="mdcx"),data=PB),
+#          mdcv= scam(PB~s(E, bs="mdcv"),data=PB),
+#          avg= lm(PB - 0*E ~ 1, data=PB) ,
+#          custom = do.call(custom.type , list(formula, data = PB))
+#   )
+# }
+
+# plot the relationship
 
