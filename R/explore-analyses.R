@@ -60,6 +60,8 @@ q
 Indexq <- turbot$Index/q
 Indexq # q is 1 in this case
 
+# TODO: May want to smooth the index (Kalman filter or some other smoother)
+
 # Simple surplus production function
 # Pt = It+1 - It + Ct
 
@@ -79,22 +81,21 @@ PBcompare #matches
 
 # Kobe plot of PB vs E
  # I don't understand the legend of the ccca plot
- # Make a new version in this repo without it (Kobe2.f)
+ # Make a new version in this repo without it (Kobe2.f in Kobe2_plot.R)
 # colours are the value of the environmental variable
-# TODO: Maybe add the years as well
-Kobe2.f(PB=PB,E=PB$E)
+# Added the years
+source("R/Kobe2_plot.R")
+Kobe2.f(PB=PB,E=PB$E, offset=0.075)
 colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.5, 3.5, 2.7, 4.5)
+
+# Make a Kobe plot of PB vs rel B
+Kobe3.f(PB=PB,E=PB$E, offset=-0.05)
+colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.8, 1.3, 3., 2.)
 
 #=========================================================================
 
 # Fit a relationship between the P/B and the E variable
 #   according to what you selected in params
-PvsE= PBE.fit.f(PB,model.type=model.type, knots=knots, poly.degree=poly.degree)
-model.type
-knots
-poly.degree
-
-View(PvsE)
 
 # What does the PBE.fit.f function do?
 
@@ -132,5 +133,18 @@ View(PvsE)
 #   )
 # }
 
+# The example in the package is a gam
+PvsE= PBE.fit.f(PB,model.type=model.type, knots=knots,
+                poly.degree=poly.degree)
+model.type
+knots
+poly.degree
+
 # plot the relationship
+na.year= nrow(PB)
+plot(na.omit(cbind(PB$E,PB$PB)),pch=20,xlab="E",ylab="P/B",col="darkgrey",type="n")
+text(PB$E[-na.year],PB$PB[-na.year],PB$Year[-na.year],cex=.7)
+pred.x= seq(min(PB$E)*.90,max(PB$E)*1.05,length=1000)
+lines(pred.x,predict(PvsE.null,newdata=data.frame(E=pred.x)),lwd=2,col="grey")
+lines(pred.x,predict(PvsE,newdata=data.frame(E=pred.x)),lwd=2)
 
