@@ -20,9 +20,9 @@ params
 # The package pre-loads the data
 # (several other species files in the package data folder)
 # Model needs survey, catch and an E variable (e.g. Temp)
-View(turbot)
-View(ncod)
-View(ShrimpGSL)
+#View(turbot)
+#View(ncod)
+#View(ShrimpGSL)
 
 # Note there can't be missing years but there is no check for it
 # But there can be NAs for some variables in some years
@@ -50,7 +50,7 @@ legend("topleft",bty="n",legend=c("Survey","Catch","Temperature"),lwd=2,lty=c(1)
 
 PB= PB.f(turbot, ref.years=ref.years, q=q)
 
-View(PB)
+#View(PB)
 
 # Recreate what the function does
 # ref.years and q are from the parameter dataset
@@ -192,7 +192,6 @@ allAIC <- data.frame(
 #=============================================================================
 # Fit a normal distribution to the E time series and pull the parameters out.
 # This is for projecting future climate variables
-# Later on, we will shift the mean and sd for the projections
 
 # uses function norm.fit.f, where E is the environmental variable
 # norm.fit.f= function(E){
@@ -206,7 +205,10 @@ Enorm
 Edist.a=Enorm$estimate[1] #mean
 Edist.b=Enorm$estimate[2] #sd
 
-# Could use another function, e.g., with a longer tail, e.g., gamma, lognormal
+# Could use another distribution, e.g., with a fatter tail, e.g., gamma, lognormal
+# Gamma and lognormal are built in,
+#  but there is also a function called E.dist.fit.f that can be used
+#   for other distributions
 Egamma =Egamma.fit.f(E=PB$E)
 Egamma.a=Egamma$estimate[1] #shape
 Egamma.b=Egamma$estimate[2] #rate
@@ -229,7 +231,6 @@ lines(Elnormplot, col=3, lwd=2)
 legend("topright", legend=c("Normal","Gamma","Lognormal"), col=1:3, lwd=2,bty="n")
 
 #=============================================================================
-
 # Develop the E projection values based on your choice of projection parameters
 # param E.dist.a The mean of the normal distribution
 # param E.dist.b The standard deviation of the normal distribution
@@ -242,6 +243,9 @@ legend("topright", legend=c("Normal","Gamma","Lognormal"), col=1:3, lwd=2,bty="n
 #   E
 # }
 
+# NOTE: There is also a multivariate normal version that I haven't
+# looked at called Eprojnorm.f.mv
+
 # Default values
 Emean.shift #0
 proj.years #10
@@ -251,7 +255,38 @@ Eproj= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
                    Emean.shift=Emean.shift,
                    proj.years=proj.years, N)
 
-View(Eproj)
+# Shift to a warmer mean
+Emean.shift.warm=0.5
+Eproj.warm= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
+                        Emean.shift=Emean.shift.warm,
+                        proj.years=proj.years, N)
+
+# Shift to a cooler mean
+Emean.shift.cold=-0.5
+Eproj.cold= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
+                        Emean.shift=Emean.shift.cold,
+                        proj.years=proj.years, N)
+
+# Increase the variance
+Emean.shift=0.0
+E.var.inc=1.5
+Edist.b= Edist.b*E.var.inc
+Eproj.var= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift,
+                       proj.years=proj.years, N)
+
+# Plot the shifted normal distributions
+Nrand=1000000
+Edist.a=Enorm$estimate[1]
+Edist.b=Enorm$estimate[2]
+Ebase=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1))
+Ewarm=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.warm,E.var.inc=1))
+Ecold=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.cold,E.var.inc=1))
+Evar=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1.5))
+plot(Ebase, xlab=expression('Temperature('^o*C*')'), ylab="Density",xlim=c(0,6),lwd=2,main="")
+lines(Ewarm, lwd=2,col="red")
+lines(Ecold, lwd=2,col="blue")
+lines(Evar, lwd=2,col="green")
+
 
 
 
