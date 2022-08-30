@@ -190,3 +190,68 @@ allAIC <- data.frame(
   )
 
 #=============================================================================
+# Fit a normal distribution to the E time series and pull the parameters out.
+# This is for projecting future climate variables
+# Later on, we will shift the mean and sd for the projections
+
+# uses function norm.fit.f, where E is the environmental variable
+# norm.fit.f= function(E){
+#   E= E[!is.na(E)]
+#   lnf= fitdistr(E,densfun="normal")
+#   lnf
+# }
+
+Enorm= norm.fit.f(E=PB$E)
+Enorm
+Edist.a=Enorm$estimate[1] #mean
+Edist.b=Enorm$estimate[2] #sd
+
+# Could use another function, e.g., with a longer tail, e.g., gamma, lognormal
+Egamma =Egamma.fit.f(E=PB$E)
+Egamma.a=Egamma$estimate[1] #shape
+Egamma.b=Egamma$estimate[2] #rate
+
+Elnorm =lnorm.fit.f(E=PB$E)
+Elnorm.a=Elnorm$estimate[1] #meanlog
+Elnorm.b=Elnorm$estimate[2] #sdlog
+
+# Plot the distributions
+Nrand=1000000
+source("R/rlnorm_plot.R")
+Edist.a=Enorm$estimate[1]
+Edist.b=Enorm$estimate[2]
+Enormplot=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1))
+plot(Enormplot, xlab=expression('Temperature('^o*C*')'), ylab="Density",xlim=c(0,6),lwd=2,main="")
+Egammaplot=density(Egamma.plot.f(Nrand=Nrand, shape=Egamma.a, rate=Egamma.b,Emean.shift=0,E.variance=1))
+lines(Egammaplot, col=2, lwd=2)
+Elnormplot=density(lnorm.plot.f(Nrand=Nrand, Edist.a=Elnorm.a, Edist.b=Elnorm.b,Emean.shift=0,E.var.inc=1))
+lines(Elnormplot, col=3, lwd=2)
+legend("topright", legend=c("Normal","Gamma","Lognormal"), col=1:3, lwd=2,bty="n")
+
+#=============================================================================
+
+# Develop the E projection values based on your choice of projection parameters
+# param E.dist.a The mean of the normal distribution
+# param E.dist.b The standard deviation of the normal distribution
+# param Emean.shift The shift if the mean. This is done rather than changing the mean directly so it is generic for variety of distributions
+# param proj.years The number of years to project into the future
+# param N The number of different realisations of the future to create
+
+# Eprojnorm.f= function(Edist.a, Edist.b, Emean.shift=1, proj.years, N){
+#   E= matrix(rnorm(proj.years*N,mean=Edist.a,sd=Edist.b)+Emean.shift,ncol=N,nrow=proj.years)
+#   E
+# }
+
+# Default values
+Emean.shift #0
+proj.years #10
+N #2000
+
+Eproj= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
+                   Emean.shift=Emean.shift,
+                   proj.years=proj.years, N)
+
+View(Eproj)
+
+
+
