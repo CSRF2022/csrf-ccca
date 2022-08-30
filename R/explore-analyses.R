@@ -97,14 +97,15 @@ colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.8, 1.3, 3., 2.)
 # Fit a relationship between the P/B and the E variable
 #   according to what you selected in params
 
-# What does the PBE.fit.f function do?
+# This might be the fun part. Lots of ways to explore the statistical fit
 
-# this might be the fun part
 # model.type = the kind of model to fit ("poly", "gam", "gam.adaptive","avg","mpi","mpd","cx","cv","micx","micv","mdcx","mdcv","custom")
 # knots = the number of knots for adaptive GAM
 # poly.degree = the degree of the polynomial to fit
 # custom.type = the type of model (ie. gam , scam , or lm) to use in custom model
 # formula = the formula to use in custom model
+
+# TODO: need to evaluate best fit model (AIC? BIC?)
 
 # Function description:
 # The various model fits: polynomial "poly", GAM "gam", adaptive GAM "gam.adaptive", various scam fits
@@ -140,11 +141,52 @@ model.type
 knots
 poly.degree
 
+# Run a null model (average relationship, see switch function above)
+PvsE.null= PBE.fit.f(PB,model.type="avg", knots=knots, poly.degree=poly.degree)
+
 # plot the relationship
 na.year= nrow(PB)
-plot(na.omit(cbind(PB$E,PB$PB)),pch=20,xlab="E",ylab="P/B",col="darkgrey",type="n")
+plot(na.omit(cbind(PB$E,PB$PB)),pch=20,xlab="E",ylab="P/B",
+     col="darkgrey",type="n")
 text(PB$E[-na.year],PB$PB[-na.year],PB$Year[-na.year],cex=.7)
 pred.x= seq(min(PB$E)*.90,max(PB$E)*1.05,length=1000)
 lines(pred.x,predict(PvsE.null,newdata=data.frame(E=pred.x)),lwd=2,col="grey")
 lines(pred.x,predict(PvsE,newdata=data.frame(E=pred.x)),lwd=2)
 
+# try a different model
+model.type <- "gam.adaptive"
+PvsE.ga= PBE.fit.f(PB,model.type=model.type, knots=knots,
+                   poly.degree=poly.degree)
+lines(pred.x,predict(PvsE.ga,newdata=data.frame(E=pred.x)),lwd=2, col=2)
+
+model.type <- "poly"
+poly.degree <- 2
+PvsE.poly2= PBE.fit.f(PB,model.type=model.type, knots=knots,
+                   poly.degree=poly.degree)
+lines(pred.x,predict(PvsE.poly2,newdata=data.frame(E=pred.x)),lwd=2, col=3)
+
+poly.degree <- 3
+PvsE.poly3= PBE.fit.f(PB,model.type=model.type, knots=knots,
+                      poly.degree=poly.degree)
+lines(pred.x,predict(PvsE.poly3,newdata=data.frame(E=pred.x)),lwd=2, col=4)
+
+model.type <- "mdcv"
+PvsE.mdcv= PBE.fit.f(PB,model.type=model.type, knots=knots,
+                      poly.degree=poly.degree)
+lines(pred.x,predict(PvsE.mdcv,newdata=data.frame(E=pred.x)),lwd=2, col=6)
+
+legend("topright",bty="n",legend=c("null","gam", "gam.adaptive","polynomial 2","polynomial 3","mdcv"), col=c("lightgray",1:4,6),lwd=2)
+
+AIC.null<-AIC(PvsE.null)
+AIC.gam <- AIC(PvsE)
+AIC.ga <- AIC(PvsE.ga)
+AIC.poly2 <- AIC(PvsE.poly2)
+AIC.poly3 <- AIC(PvsE.poly3)
+AIC.mdcv <- AIC(PvsE.mdcv)
+
+allAIC <- data.frame(
+  Model = c("null","gam", "gam.adaptive","polynomial 2","polynomial 3","mdcv"),
+  AIC =c(AIC.null,AIC.gam,AIC.ga,AIC.poly2,AIC.poly3,AIC.mdcv)
+  )
+
+#=============================================================================
