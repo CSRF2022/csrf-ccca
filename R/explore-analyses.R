@@ -296,28 +296,87 @@ EMed <- apply(Eproj,1,median)
 E975 <- apply(Eproj,1,quantile,probs=0.975)
 E025 <- apply(Eproj,1,quantile,probs=0.025)
 
+EMed.warm <- apply(Eproj.warm,1,median)
+E975.warm <- apply(Eproj.warm,1,quantile,probs=0.975)
+E025.warm <- apply(Eproj.warm,1,quantile,probs=0.025)
+
+EMed.cold <- apply(Eproj.cold,1,median)
+E975.cold <- apply(Eproj.cold,1,quantile,probs=0.975)
+E025.cold <- apply(Eproj.cold,1,quantile,probs=0.025)
+
+EMed.var <- apply(Eproj.var,1,median)
+E975.var <- apply(Eproj.var,1,quantile,probs=0.975)
+E025.var <- apply(Eproj.var,1,quantile,probs=0.025)
+
 E_projyears <- cbind(E025,EMed,E975) %>%
   as.data.frame() %>%
   mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
   select(Year,E025,EMed,E975)
+
+E_projyears.warm <- cbind(E025.warm,EMed.warm,E975.warm) %>%
+  as.data.frame() %>%
+  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
+  select(Year,E025.warm,EMed.warm,E975.warm)
+
+E_projyears.cold <- cbind(E025.cold,EMed.cold,E975.cold) %>%
+  as.data.frame() %>%
+  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
+  select(Year,E025.cold,EMed.cold,E975.cold)
+
+E_projyears.var <- cbind(E025.var,EMed.var,E975.var) %>%
+  as.data.frame() %>%
+  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
+  select(Year,E025.var,EMed.var,E975.var)
+
 E_allyears <- PB %>%
   select(Year,E) %>%
   mutate(E025=E,EMed=E,E975=E) %>%
   select(-E) %>%
-  rbind(E_projyears)
-
-g <-  ggplot(E_allyears) +
+  rbind(E_projyears) %>%
+  ggplot() +
   geom_ribbon(aes(x=Year, ymin=E025,ymax=E975),
               colour="blue", fill="blue",alpha=0.5)+
   theme_bw()+
   ylim(0,4.5)
-g
+E_allyears
 
+#Weird looking  plot. Basically temp can be anything in the range.
 
+E_allyears.warm <- PB %>%
+  select(Year,E) %>%
+  mutate(E025.warm=E,EMed.warm=E,E975.warm=E) %>%
+  select(-E) %>%
+  rbind(E_projyears.warm) %>%
+  ggplot() +
+  geom_ribbon(aes(x=Year, ymin=E025.warm,ymax=E975.warm),
+              colour="orange", fill="orange",alpha=0.5)+
+  theme_bw()+
+  ylim(0,5.)
+E_allyears.warm
 
+E_allyears.cold <- PB %>%
+  select(Year,E) %>%
+  mutate(E025.cold=E,EMed.cold=E,E975.cold=E) %>%
+  select(-E) %>%
+  rbind(E_projyears.cold) %>%
+  ggplot() +
+  geom_ribbon(aes(x=Year, ymin=E025.cold,ymax=E975.cold),
+              colour="green", fill="green",alpha=0.5)+
+  theme_bw()+
+  ylim(0,4.5)
+E_allyears.cold
 
-
-
+E_allyears.var <- PB %>%
+  select(Year,E) %>%
+  mutate(E025.var=E,EMed.var=E,E975.var=E) %>%
+  select(-E) %>%
+  rbind(E_projyears.var) %>%
+  ggplot() +
+  geom_ribbon(aes(x=Year, ymin=E025.var,ymax=E975.var),
+              colour="purple", fill="purple",alpha=0.5)+
+  theme_bw()+
+  ylim(0,6)
+E_allyears.var
 
 #==========================================================================
 # Develop the P/B projection values based on the P/B vs E fit and the
