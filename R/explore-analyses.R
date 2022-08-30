@@ -8,6 +8,7 @@
 # library(devtools)
 # install_github("duplisea/ccca")
 library(ccca)
+library(tidyverse)
 
 # the parameters come with the ccca package
 # the mapply function puts them in the global environment
@@ -286,6 +287,74 @@ plot(Ebase, xlab=expression('Temperature('^o*C*')'), ylab="Density",xlim=c(0,6),
 lines(Ewarm, lwd=2,col="red")
 lines(Ecold, lwd=2,col="blue")
 lines(Evar, lwd=2,col="green")
+
+# Plot the predicted E variable against time
+plot(PB$Year,PB$E,type="l", xlim=c(PB$Year[1],max(PB$Year)+10),ylim=c(0,1.1*max(PB$E)))
+matplot(2020:2029,Eproj, type="l")
+
+EMed <- apply(Eproj,1,median)
+E975 <- apply(Eproj,1,quantile,probs=0.975)
+E025 <- apply(Eproj,1,quantile,probs=0.025)
+
+E_projyears <- cbind(E025,EMed,E975) %>%
+  as.data.frame() %>%
+  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
+  select(Year,E025,EMed,E975)
+E_allyears <- PB %>%
+  select(Year,E) %>%
+  mutate(E025=E,EMed=E,E975=E) %>%
+  select(-E) %>%
+  rbind(E_projyears)
+
+g <-  ggplot(E_allyears) +
+  geom_ribbon(aes(x=Year, ymin=E025,ymax=E975),
+              colour="blue", fill="blue",alpha=0.5)+
+  theme_bw()+
+  ylim(0,4.5)
+g
+
+
+
+
+
+
+
+#==========================================================================
+# Develop the P/B projection values based on the P/B vs E fit and the
+# E projection you specified above. When add.residuals=1 then a
+# residual is sampled for each time step of each projection and is
+# added to the P/B values. If the P/B vs E fit is relatively unbiased then
+# it will not make much difference to the median but it will increase the
+# future uncertainty. If you set it =0 then the residual is not added and
+# you will have less uncertainty in the future.
+# If the P/B vs E model is biased, this bias will be more likely to be
+# carried forward if residuals are not sampled (=0).
+
+add.resids # default is to add residuals
+
+PBproj= PB.for.projection.f(PvsE=PvsE,Eproj,add.residuals=add.resids)
+View(PBproj)
+
+# What does this function do?
+# Basically, makes a prediction of PB based on PvsE prediction
+# Adds residuals or not
+
+# PB.for.projection.f= function(PvsE, Eproj, add.residuals=add.resids){
+#   median.prediction= Eproj*-9999
+#   for (i in 1:ncol(Eproj)){
+#     newdat= Eproj[,i]
+#     median.prediction[,i]= predict(PvsE, newdata=data.frame(E=newdat))
+#   }
+#   error.prediction= PvsE.resids.f(PvsE,proj.years=nrow(Eproj),N=ncol(Eproj))*add.residuals
+#   PB.prediction= median.prediction+error.prediction
+#   PB.prediction
+# }
+
+# PvsE.resids.f= function(PvsE, proj.years, N){
+#   resids= matrix(sample(residuals(PvsE),proj.years*N,replace=T),ncol=N,nrow=proj.years)
+#   resids
+# }
+
 
 
 
