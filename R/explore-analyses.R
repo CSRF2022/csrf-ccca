@@ -357,6 +357,7 @@ Fstrat
 # What does this function do?
 # Looks like a simple surplus production model
 # With and without density dependence
+# Uses the reference Fstrat
 Bproj= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj, Fstrat, K=K, theta=1)
 
 # Performs the projection with climate scenario and fishing strategy
@@ -399,9 +400,9 @@ Bproj= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj, Fstrat, K=K, 
 #   proj.out
 # }
 
-# RF added Bstart.mult and theta args, which were missing and caused errors
 # Now get the final Biomass under a sequence of F values for each
 #   climate scenario (the 2000 MC runs)
+# RF added Bstart.mult and theta args, which were missing and caused errors
 # Fout isn't a very good name for this output, which is actually final Biomass scenarios
 Fout= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
 # View(Fout$f) # the sequence of constant F for the projections
@@ -452,8 +453,70 @@ ref.pt
 
 # Now have the probability of being above the reference biomass
 # in the final projection year for a set of constant F policies (PofF)
+#=============================================================================
 
+# Now we seem to be back at the annual biomasses under Fstrat
 
+# Summarise the output of the projections by calculating quantiles
+#  and putting results in a dataframe.
+# Calculates the probability of being at or above a reference point.
+# Not sure what Fs are used here. Maybe reference F?
+Bproj.summary= Bproj.summary.f(PB,Bproj,PBproj,Eproj)
+P= rankprob.f(Bproj,PB,ref.pt)
+
+#=============================================================================
+
+# Now do it all again for the other climate scenarios
+
+# Null
+PvsE.null= PBE.fit.f(PB,model.type="avg", knots=knots, poly.degree=poly.degree)
+PBproj.null= PB.for.projection.f(PvsE=PvsE.null,Eproj,add.residuals=add.resids)
+Bproj.null= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.null, Fstrat, K=K, theta=1)
+# RF added Bstart.mult and theta args
+Fout.null= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj.null,Fseq=fs,time.frame=time.frame, N=N, K=K,theta=1)
+PofF.null= PofF.f(PB,Fout.null,ref.pt=ref.pt)
+Bproj.summary.null= Bproj.summary.f(PB,Bproj.null,PBproj.null,Eproj)
+P.null= rankprob.f(Bproj.null,PB,ref.pt)
+
+# Warm
+Emean.shift.warm=0.5
+Eproj.warm= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.warm, proj.years=proj.years, N)
+PBproj.warm= PB.for.projection.f(PvsE=PvsE,Eproj.warm,add.residuals=add.resids)
+Bproj.warm= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.warm, Fstrat, K=K, theta=1)
+# RF added Bstart.mult and theta args
+Fout.warm= Fseq.f(PB, Bstart.mult=Bstart.mult, PBproj=PBproj.warm,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
+PofF.warm= PofF.f(PB,Fout.warm,ref.pt=ref.pt)
+Bproj.summary.warm= Bproj.summary.f(PB,Bproj.warm,PBproj.warm,Eproj.warm)
+P.warm= rankprob.f(Bproj.warm,PB,ref.pt)
+
+# Cold
+Emean.shift.cold=-0.5
+Eproj.cold= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.cold, proj.years=proj.years, N)
+PBproj.cold= PB.for.projection.f(PvsE=PvsE,Eproj.cold,add.residuals=add.resids)
+Bproj.cold= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.cold, Fstrat, K=K, theta=1)
+# RF added Bstart.mult and theta arg
+Fout.cold= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj.cold,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
+PofF.cold= PofF.f(PB,Fout.cold,ref.pt=ref.pt)
+Bproj.summary.cold= Bproj.summary.f(PB,Bproj.cold,PBproj.cold,Eproj.cold)
+P.cold= rankprob.f(Bproj.cold,PB,ref.pt)
+
+# Increase variance
+Emean.shift=0.0
+E.var.inc=1.5
+Edist.b= Edist.b*E.var.inc
+Eproj.var= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift,
+                       proj.years=proj.years, N)
+PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
+Bproj.var= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.var, Fstrat, K=K, theta=1)
+# RF added Bstart.mult and theta arg
+Fout.var= Fseq.f(PB, Bstart.mult=Bstart.mult, Fseq=fs,PBproj=PBproj.var,time.frame=time.frame, N=N, K=K, theta=1)
+PofF.var= PofF.f(PB,Fout.var,ref.pt=ref.pt)
+Bproj.summary.var= Bproj.summary.f(PB,Bproj.var,PBproj.var,Eproj.var)
+P.var= rankprob.f(Bproj.var,PB,ref.pt)
+
+# need to reset the e distribution parameters to run the full F, E simulation
+Edist.a=Enorm$estimate[1]
+Edist.b=Enorm$estimate[2]
 
 
 
