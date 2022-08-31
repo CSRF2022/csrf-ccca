@@ -518,6 +518,26 @@ P.var= rankprob.f(Bproj.var,PB,ref.pt)
 Edist.a=Enorm$estimate[1]
 Edist.b=Enorm$estimate[2]
 
+#===========================================================================
+#Run multiple simulations for each combination of E scenario and F.
+# First the E and PB scenarios are set up and then multiple projections
+# are made based on the exploitation rate series specified in the
+# parameters file.
+
+# I DO NOT KNOW WHAT IS GOING ON HERE OR HOW THIS RELATES TO PREVIOUS CODE
+# IS THIS JUST BATCHING UP THE PREVIOUS CODE?
+
+# The Emean.shifts and N.CCF arguments are in the params object
+# @param mean.shift a vector of shifts in the mean of the gamma distribution of E
+# @param N The number of different realisations of the future to create
+# @param proj.years The number of years to project into the future
+# @param shape The gamma distribution shape parameter
+# @param rate The gamma distribution rate parameter
+ECCF= Eproj.list.f(Emean.shifts=Emean.shifts, N=N.CCF, proj.years=proj.years, Edist.a=Edist.a,
+                   Edist.b=Edist.b)
+PBCCF= PBproj.list.f(PvsE=PvsE, Eprojection=ECCF)
+CCF.raw= P.R.for.EF.f(E.CCF=ECCF, PB.CCF=PBCCF, Fs=fs, PB=PB, ref.pt=ref.pt, Bstart.mult=Bstart.mult,
+                      K=K, theta=theta)
 
 
 
