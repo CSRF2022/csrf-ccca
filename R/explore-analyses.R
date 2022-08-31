@@ -307,7 +307,7 @@ PBproj.warm= PB.for.projection.f(PvsE=PvsE,Eproj.warm,add.residuals=add.resids)
 PBproj.cold= PB.for.projection.f(PvsE=PvsE,Eproj.cold,add.residuals=add.resids)
 PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
 
-View(PBproj)
+#View(PBproj)
 
 # What does this function do?
 # Basically, makes a prediction of PB based on PvsE prediction
@@ -340,6 +340,16 @@ lines(density(PBproj.warm),lwd=2,col="red")
 lines(density(PBproj.var),lwd=2,col="green")
 lines(density(PBproj),lwd=2,col="black")
 legend("topright",legend=c("Null", "Base","Cold","Warm","Var"), col=c("grey", "black","blue","red","green"), lty=1,lwd=2,bty="n")
+
+#=========================================================================
+# Now time for the fishing strategy
+# In this case is the the mean exploitation (Index corrected by catchability) during the last five years.
+# This function just takes the mean relative F from the PB object
+# or turns of fishing for the stated years if moratorium=T
+Fstrat= F.strategy(PB, 2014:2018, moratorium=F)
+Fstrat
+
+
 
 
 #========== EXTRA PLOTS ETC ============================
