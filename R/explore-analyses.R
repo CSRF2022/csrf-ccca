@@ -64,7 +64,7 @@ Indexq # q is 1 in this case
 # TODO: May want to smooth the index (Kalman filter or some other smoother)
 
 # Simple surplus production function
-# Pt = It+1 - It + Ct
+# Pt = Bt+1 - Bt + Ct
 
 # The diff function simply calculates Indexq+1 - Indexq
 PB2 <- (diff(Indexq)+turbot$Catch[-length(turbot$Catch)])/Indexq[-length(Indexq)]
@@ -342,17 +342,126 @@ lines(density(PBproj),lwd=2,col="black")
 legend("topright",legend=c("Null", "Base","Cold","Warm","Var"), col=c("grey", "black","blue","red","green"), lty=1,lwd=2,bty="n")
 
 #=========================================================================
-# Now time for the fishing strategy
+# Fishing strategy
 # In this case is the the mean exploitation (Index corrected by catchability) during the last five years.
 # This function just takes the mean relative F from the PB object
-# or turns of fishing for the stated years if moratorium=T
+# or turns off fishing for the stated years if moratorium=T
 Fstrat= F.strategy(PB, 2014:2018, moratorium=F)
 Fstrat
 
+#=========================================================================
+# Now run the projection given all the above calculations and parameters.
+# The trajectory over the projection period and the probability that B
+# is greater than the objective after the specified time range.
+
+# What does this function do?
+# Looks like a simple surplus production model
+# With and without density dependence
+Bproj= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj, Fstrat, K=K, theta=1)
+
+# Performs the projection with climate scenario and fishing strategy
+# @param PB the data and model fit coming from applying the PB model (PB.f)
+# @param Bstart.mult the proporption of the last data year's biomass
+#     used to start the projection
+# @param PBproj The matrix of projected PB values based on climate scenario
+# @param Fstrat The fishing strategy
+# @param K The multiplier of maximum observed biomass to be carrying capacity
+# @param theta the skewness of the density dependence factor (1=Schaeffer)
+
+# Density independent
+# Bt+1 = Bt + Bt*PBt - Bt*Ft
+
+# Density dependent
+# If PB < 0:  Bt+1 = Bt + Bt*PBt - Bt*Ft
+# If PB >= 0: Bt+1 = Bt + Bt*PBt*(1-(Bt/K)^theta) - Bt*Ft
+
+# projection.f= function(PB, Bstart.mult, PBproj, Fstrat, K, theta=1){
+#   if(theta<=0) stop('theta must be >0 and probably should be <=1')
+#   K= K*max(PB$Index.q, na.rm=T)
+#   N= ncol(PBproj)
+#   proj.years= nrow(PBproj)
+#   proj.di= matrix(ncol=N,nrow=proj.years)
+#   proj.dd= matrix(ncol=N,nrow=proj.years)
+#   for (MC in 1:N){
+#     B.di= tail(PB$Index.q,1)*Bstart.mult
+#     B.dd= B.di
+#     for (i in 1:proj.years){
+#       PB.ratio= PBproj[i,MC]
+#       #Bt+1=Bt+Bt*PBt-Ct
+#       B.di= max(c(.001,(B.di+B.di*PB.ratio-B.di*Fstrat))) #density independent
+#       if(PB.ratio<0) B.dd= max(c(.001,(B.dd+B.dd*PB.ratio-B.dd*Fstrat)))
+#       if(PB.ratio>=0) B.dd= max(c(.001,(B.dd+B.dd*PB.ratio*(1-(B.dd/K)^theta)-B.dd*Fstrat)))
+#       proj.di[i,MC]= B.di
+#       proj.dd[i,MC]= B.dd
+#     }
+#   }
+#   proj.out= list(proj.di=proj.di,proj.dd=proj.dd)
+#   proj.out
+# }
+
+# RF added Bstart.mult and theta args, which were missing and caused errors
+# Now get the final Biomass under a sequence of F values for each
+#   climate scenario (the 2000 MC runs)
+# Fout isn't a very good name for this output, which is actually final Biomass scenarios
+Fout= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
+# View(Fout$f) # the sequence of constant F for the projections
+# View(Fout$f.di) # the final biomass (density independent) under each F
+# View(Fout$f.dd) # the final biomass (density dependent) under each F
+
+# Now get the probability of being at or above the reference B value
+# at the end of the time frame specified.
+PofF= PofF.f(PB,Fout,ref.pt=ref.pt)
+View(PofF)
+# @param PB the PB model output
+# @param Fprob the output of Fseq.f, i.e. the final B value at the end of a specified period
+# @param ref.pt the multiplier of the reference period giving the
+#   reference point. Only required if using reference years.
+# @param ref.pt.fixed the Blim or limit reference point you want to use
+
+ref.pt
+
+# PofF.f=function (PB, Fprob, ref.pt = NULL , ref.pt.fixed = NULL) {
+#   if (all(is.null(ref.pt.fixed) , is.null(ref.pt))) stop('At least one Reference Point must be specified.')
+#   if (!is.null(ref.pt.fixed)) Bref = ref.pt.fixed else
+#     Bref = Bref.f(PB = PB, ref.pt.multiplier = ref.pt) # gets average biomass for ref years * multiplier
+#   # Combine the ref biomass (col 1) and all the biomasses under each F (cols 2:2001)
+#   obj.prob.di = cbind(rep(Bref, nrow(Fprob$f.di)), Fprob$f.di)
+#   obj.prob.dd = cbind(rep(Bref, nrow(Fprob$f.dd)), Fprob$f.dd)
+#   P.di = vector(length = nrow(obj.prob.di)) #Make vector for probs
+#   P.dd = P.di
+#   N = ncol(Fprob$f.di)
+#   # For each F scenario (row) get the prob of being above the ref biomass
+#   for (i in 1:nrow(obj.prob.di)) {
+#     vec.di = obj.prob.di[i, ] #ith row of matrix
+#       # (i.e. F scenario i, where the first element is the ref biomass)
+#     P.di[i] = 1 - rank(vec.di)[1]/N  # get the rank of the ref biomass and
+#       # convert to probability by dividing by N. This gives the proportion
+#       # of trials above the ref. Shouldn't it be divided by N+1?
+#     vec.dd = obj.prob.dd[i, ]
+#     P.dd[i] = 1 - rank(vec.dd)[1]/N
+#   }
+#   years = (tail(PB$Year, 1) + 1):(tail(PB$Year, 1) + length(P.di)) #what for?
+#   P = data.frame(f = Fprob$f, P.di = P.di, P.dd = P.dd)
+#   P
+# }
+#
+# Bref.f= function(PB, ref.pt.multiplier){
+#   Bref= ref.pt.multiplier*sum(PB$Index.q * PB$refererence.years,na.rm=T)/sum(PB$refererence.years,na.rm=T)
+#   Bref
+# }
+
+# Now have the probability of being above the reference biomass
+# in the final projection year for a set of constant F policies (PofF)
 
 
 
-#========== EXTRA PLOTS ETC ============================
+
+
+
+
+
+#==========================================================================
+#========== EXTRA PLOTS ETC ===============================================
 # Plot the predicted E variable against time
 plot(PB$Year,PB$E,type="l", xlim=c(PB$Year[1],max(PB$Year)+10),ylim=c(0,1.1*max(PB$E)))
 matplot(2020:2029,Eproj, type="l")
