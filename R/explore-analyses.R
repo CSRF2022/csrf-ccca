@@ -554,6 +554,97 @@ PBCCF= PBproj.list.f(PvsE=PvsE, Eprojection=ECCF)
 # range of Emean shifts instead of just +0.5 and -0.5
 CCF.raw= P.R.for.EF.f(E.CCF=ECCF, PB.CCF=PBCCF, Fs=fs, PB=PB, ref.pt=ref.pt, Bstart.mult=Bstart.mult,
                       K=K, theta=theta)
+View(CCF.raw)
+
+# ===========================================================================================
+# That's it for analysis. Now need to look at the final plots to see how these
+# results are recommended to be used (the last three figs of the readme at
+#  https://github.com/duplisea/ccca)
+
+# 1. Time series plots
+# The plot of the projection given your E scenario for both density
+#  independent and dependent models. The biomass reference level is
+#  depicted as the horizontal dashed line. Confidence intervals are 90%.
+
+# Just look at one to begin with
+# The null case (no relationship between E and PB)
+Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
+plot(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.null$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.low,Bproj.summary.null$B.di.CI.high,col="grey")
+confint(Bproj.summary.null$year,Bproj.summary.null$B.dd.CI.low,Bproj.summary.null$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.null$year,Bproj.summary.null$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.null$year,Bproj.summary.null$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.null$year,Bproj.summary.null$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.med,lwd=2)
+lines(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.null$year,rep(Bref,length(Bproj.summary.null$year)),lty=2)
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="Null",bty="n",cex=0.75)
+
+# The base case (Future E is average)
+Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
+plot(Bproj.summary$year,Bproj.summary$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.null$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary$year,Bproj.summary$B.di.CI.low,Bproj.summary$B.di.CI.high,col="grey")
+confint(Bproj.summary$year,Bproj.summary$B.dd.CI.low,Bproj.summary$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary$year,Bproj.summary$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary$year,Bproj.summary$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary$year,Bproj.summary$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary$year,Bproj.summary$B.di.CI.med,lwd=2)
+lines(Bproj.summary$year,Bproj.summary$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary$year,Bproj.summary$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary$year,rep(Bref,length(Bproj.summary$year)),lty=2)
+legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary$year,Bproj.summary$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+
+# Future E is warmer ... mean of normal dist shifts by 0.5 deg
+Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
+plot(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.null$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.low,Bproj.summary.warm$B.di.CI.high,col="grey")
+confint(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.low,Bproj.summary.warm$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.med,lwd=2)
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.warm$year,rep(Bref,length(Bproj.summary.warm$year)),lty=2)
+legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary.warm$year,Bproj.summary.warm$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+
+# Future E is cooler ... mean of normal dist shifts by -0.5 deg
+Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
+plot(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.cold$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.low,Bproj.summary.cold$B.di.CI.high,col="grey")
+confint(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.low,Bproj.summary.cold$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.med,lwd=2)
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.cold$year,rep(Bref,length(Bproj.summary.cold$year)),lty=2)
+legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary.cold$year,Bproj.summary.cold$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+
+# E variance increases ... sd of normal dist shifts by 1.5 deg
+Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
+plot(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.var$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.low,Bproj.summary.var$B.di.CI.high,col="grey")
+confint(Bproj.summary.var$year,Bproj.summary.var$B.dd.CI.low,Bproj.summary.var$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.var$year,Bproj.summary.var$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.var$year,Bproj.summary.var$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.var$year,Bproj.summary.var$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.med,lwd=2)
+lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.var$year,rep(Bref,length(Bproj.summary.var$year)),lty=2)
+legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary.var$year,Bproj.summary.var$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+
+# Not sure I agree with the summary that colder temperatures are worse for
+# the stock. Looks a bit better than the null and mean cases to me
+
 
 
 
