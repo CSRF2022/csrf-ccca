@@ -696,6 +696,71 @@ box()
 # Now we want the maximum fishing mortality that will achieve the
 # objective in the specified time period given the E scenario projected.
 
+# Uses a simple gam to predict fishing mortality that will meet
+# stated risk tolerance level
+
+# So in the warm and var cases, there is no fishing level that will
+# rebuild  the stock with 50% prob of being above F target
+
+# Null case (no E vs PB relationship)
+matplot(PofF.null[,1],PofF.null[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+        type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="Null",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.null),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.null),newdata=data.frame(P.dd=1-risk))
+rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
+rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
+box()
+
+# mean
+matplot(PofF[,1],PofF[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+        type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF),newdata=data.frame(P.dd=1-risk))
+rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
+rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
+box()
+
+# warm
+matplot(PofF.warm[,1],PofF.warm[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+        type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.warm),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.warm),newdata=data.frame(P.dd=1-risk))
+rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
+rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
+box()
+
+# cold
+matplot(PofF.cold[,1],PofF.cold[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+        type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.cold),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.cold),newdata=data.frame(P.dd=1-risk))
+rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
+rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
+box()
+
+# increased variance
+matplot(PofF.var[,1],PofF.var[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+        type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.var),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.var),newdata=data.frame(P.dd=1-risk))
+rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
+rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
+box()
+
+
+
+
+
 
 
 
