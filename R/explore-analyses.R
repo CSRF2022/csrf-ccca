@@ -757,11 +757,30 @@ rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
 rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
 box()
 
+#=============================================================================
+# Now a contour plot showing the probability of achieving the objective
+# in the specified time period under different exploitatin rates and future
+# temperature scenarios for the density independent model.
+# The actual time series of temperature an exploitation rate is shown as
+# the blue line overlay
 
+CCF.contour=interp(x=CCF.raw$E.med,y=CCF.raw$Fval,z=CCF.raw$P.di)
+contour(CCF.contour,xlab="Median temperature (°C)",ylab="Exploitation rate",xaxs="i",yaxs="i")
+risk.equi.exp.rate.di= contourLines(CCF.contour$x,CCF.contour$y,CCF.contour$z,nlevels=1,levels=1-risk)
+confint(risk.equi.exp.rate.di[[1]]$x,risk.equi.exp.rate.di[[1]]$y*0,risk.equi.exp.rate.di[[1]]$y,col=rgb(0, 1, 0,0.5))
+lines(PB$E,PB$F.rel,col="slateblue",lwd=1)
+points(PB$E,PB$F.rel,col="slateblue",pch=20)
+year.endpoints= match(range(PB$Year),PB$Year)
+points(PB$E[year.endpoints],PB$F.rel[year.endpoints],pch=22,cex=3,bg="white",col="slateblue")
+text(PB$E[year.endpoints],PB$F.rel[year.endpoints],PB$Year[year.endpoints],cex=.5)
 
-
-
-
+# Why are the probability contours dome shaped?
+# Must be because there is a dome(ish) shaped relationship between
+# E and productivity
+# So at the extremes, we have a 50% chance of achieving the target with
+# no fishing at either 1.5 degrees or 3.1 degrees. Between 2 and 2.8 degrees
+# We can fish at ~0.08 with 50% of achieving the target. Outside that temp
+# range we have to reduce fishing effort.
 
 
 #==========================================================================
