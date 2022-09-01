@@ -520,22 +520,38 @@ Edist.b=Enorm$estimate[2]
 
 #===========================================================================
 #Run multiple simulations for each combination of E scenario and F.
+
 # First the E and PB scenarios are set up and then multiple projections
 # are made based on the exploitation rate series specified in the
 # parameters file.
 
-# I DO NOT KNOW WHAT IS GOING ON HERE OR HOW THIS RELATES TO PREVIOUS CODE
-# IS THIS JUST BATCHING UP THE PREVIOUS CODE?
-
-# The Emean.shifts and N.CCF arguments are in the params object
-# @param mean.shift a vector of shifts in the mean of the gamma distribution of E
-# @param N The number of different realisations of the future to create
-# @param proj.years The number of years to project into the future
-# @param shape The gamma distribution shape parameter
-# @param rate The gamma distribution rate parameter
+# Note that the Emean.shifts and N.CCF arguments are in the params object
+# This function just loops through the Emean.shifts vector to get normal
+# distributions of the E object for the projections using Eprojnorm.f()
+# Produces a list of E matrices proj.years X N
+# So we have N projections for each series from cooler to warmer
 ECCF= Eproj.list.f(Emean.shifts=Emean.shifts, N=N.CCF, proj.years=proj.years, Edist.a=Edist.a,
                    Edist.b=Edist.b)
+
+# Note it says in the function description that the mean.shift argument is for the
+#  gamma dist but the function Eproj.list.f calls Eprojnorm.f, which is the
+#  normal distribution. It also has parameters Edist.a and Edist.b instead
+#  of rate and shape. Looks like it would be easy to change for the gamma
+# or lognormal distributions
+
+# Now get the predicted PB for all those E series
+# Uses the PvsE predictive relationship from earlier, with all the E
+# series
+# So we get a proj.years X N matrix of PB predictions for each
+#  future Emean scenario
 PBCCF= PBproj.list.f(PvsE=PvsE, Eprojection=ECCF)
+
+# Now we use these two lists to get the probability of being above Bref
+#  in the final year across the range of Fs ... for EACH Emean shift scenario
+# This is a matrix like the P matrix above, but all the climate scenarios
+# are rbinded.
+# It's essentially like rbinding P, P.cold, P.warm etc but across a big
+# range of Emean shifts instead of just +0.5 and -0.5
 CCF.raw= P.R.for.EF.f(E.CCF=ECCF, PB.CCF=PBCCF, Fs=fs, PB=PB, ref.pt=ref.pt, Bstart.mult=Bstart.mult,
                       K=K, theta=theta)
 
