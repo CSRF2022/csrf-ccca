@@ -49,7 +49,7 @@ Kobe3.f= function(PB, E, Bref.multiplier=1, col1="blue", col2="red", offset=0.1,
   B.kobe= Index.q*Bref.multiplier/mean(Index.q[base])
   PB.kobe= PB$PB
 
-  plot(B.kobe,PB.kobe,type="b",pch="    ",xlab=expression("B/B"["base"]),ylab=expression("P/B"),ylim=c(-0.5,1.1*max(PB.kobe, na.rm=T)),xlim=c(0,1.1*max(B.kobe, na.rm=T)))
+  plot(B.kobe,PB.kobe,type="b",pch="    ",xlab=expression("B/B"["base"]),ylab=expression("P/B"),ylim=c(-0.75,1.1*max(PB.kobe, na.rm=T)),xlim=c(0,1.1*max(B.kobe, na.rm=T)))
   E.categ= floor(E*4)/4 #quarter degree C categories
   tempcol=colorRampPalette(c(col1, col2))(length(E.kobe))
   temperaturecolours= tempcol[order(E.categ)]

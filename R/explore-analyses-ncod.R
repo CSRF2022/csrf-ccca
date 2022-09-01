@@ -14,7 +14,7 @@ library(tidyverse)
 # The package pre-loads the data
 # (several other species files in the package data folder)
 # Model needs survey, catch and an E variable (e.g. Temp)
-#View(turbot)
+#View(ncod)
 View(ncod)
 #View(ShrimpGSL)
 
@@ -24,45 +24,29 @@ View(ncod)
 View(params)
 
 # change some things in params
+data(params)
 params$ref.years <- 1981:1989 # pick some years with average index before 1992
 params$risk <- 0.75 # Set a higher prob of being above Blim
-params$K <- 5 # assume stock more depleted than turbot
+params$K <- 5 # assume stock more depleted than ncod
 
-data(params)
 mapply(assign, names(params), params, MoreArgs=list(envir = globalenv()))
 params
-
 
 # Note there can't be missing years but there is no check for it
 # But there can be NAs for some variables in some years
 
 # Plot the N cod data
 matplot(ncod$Year, cbind(ncod$Index,ncod$Catch),type="l",lty=c(1,1),lwd=2,xlab="Year",ylab="Survey biomass and catch (kt)",col=c("black","green"), main="Northern cod")
-yaxis2.f(ncod$Year, ncod$E,ylabel=expression('Temperature ('^o*C*')'),type="l",cex=1.1,lwd=2,lty=1,col="red")
-legend("topleft",bty="n",legend=c("Survey","Catch","Temperature"),lwd=2,lty=c(1),cex=0.7,col=c("black","green","red"))
+yaxis2.f(ncod$Year, ncod$E,ylabel=expression('NAO'),type="l",cex=1.1,lwd=2,lty=1,col="red")
+legend("topleft",bty="n",legend=c("Survey","Catch","NAO"),lwd=2,lty=c(1),cex=0.7,col=c("black","green","red"))
 
 # =========================================================================
 # Determine the annual P/B ratio of the population creating a
 # dataframe with the index bumped by q
 
-# What does the PB.f function do?
-# A simple index of abundance inflated by dividing by q
-# Relative F is determined by dividing catch by inflated index
+PB= PB.f(ncod, ref.years=ref.years, q=q)
 
-# COULD USE BIOMASS SERIES FROM A STOCK ASSESSMENT
-# OR POSSIBLY Q FROM STOCK ASSESSMENT - see if scale is important
-
-PB= PB.f(turbot, ref.years=ref.years, q=q)
-
-#View(PB)
-
-# Recreate what the function does
-# ref.years and q are from the parameter dataset
-ref.years
-q
-
-Indexq <- turbot$Index/q
-Indexq # q is 1 in this case
+Indexq <- ncod$Index/q
 
 # TODO: May want to smooth the index (Kalman filter or some other smoother)
 
@@ -70,13 +54,13 @@ Indexq # q is 1 in this case
 # Pt = Bt+1 - Bt + Ct
 
 # The diff function simply calculates Indexq+1 - Indexq
-PB2 <- (diff(Indexq)+turbot$Catch[-length(turbot$Catch)])/Indexq[-length(Indexq)]
+PB2 <- (diff(Indexq)+ncod$Catch[-length(ncod$Catch)])/Indexq[-length(Indexq)]
 PB$PB
 
 # Long version
-PB3 <- vector(length=length(turbot$Catch)-1)
+PB3 <- vector(length=length(ncod$Catch)-1)
 for(i in seq_along(PB3)) {
-  P <- Indexq[i+1] - Indexq[i] + turbot$Catch[i]
+  P <- Indexq[i+1] - Indexq[i] + ncod$Catch[i]
   PB3[i] <- P/Indexq[i]
 }
 
@@ -89,7 +73,7 @@ PBcompare #matches
 # colours are the value of the environmental variable
 # Added the years
 source("R/Kobe2_plot.R")
-Kobe2.f(PB=PB,E=PB$E, offset=0.075)
+Kobe2.f(PB=PB,E=PB$E, offset=-0.05)
 colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.5, 3.5, 2.7, 4.5)
 
 # Make a Kobe plot of PB vs rel B
@@ -193,6 +177,8 @@ allAIC <- data.frame(
   AIC =c(AIC.null,AIC.gam,AIC.ga,AIC.poly2,AIC.poly3,AIC.mdcv)
   )
 
+allAIC
+
 #=============================================================================
 # Fit a normal distribution to the E time series and pull the parameters out.
 # This is for projecting future climate variables
@@ -209,30 +195,13 @@ Enorm
 Edist.a=Enorm$estimate[1] #mean
 Edist.b=Enorm$estimate[2] #sd
 
-# Could use another distribution, e.g., with a fatter tail, e.g., gamma, lognormal
-# Gamma and lognormal are built in,
-#  but there is also a function called E.dist.fit.f that can be used
-#   for other distributions
-Egamma =Egamma.fit.f(E=PB$E)
-Egamma.a=Egamma$estimate[1] #shape
-Egamma.b=Egamma$estimate[2] #rate
-
-Elnorm =lnorm.fit.f(E=PB$E)
-Elnorm.a=Elnorm$estimate[1] #meanlog
-Elnorm.b=Elnorm$estimate[2] #sdlog
 
 # Plot the distributions
 Nrand=1000000
-source("R/rlnorm_plot.R")
 Edist.a=Enorm$estimate[1]
 Edist.b=Enorm$estimate[2]
 Enormplot=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1))
-plot(Enormplot, xlab=expression('Temperature('^o*C*')'), ylab="Density",xlim=c(0,6),lwd=2,main="")
-Egammaplot=density(Egamma.plot.f(Nrand=Nrand, shape=Egamma.a, rate=Egamma.b,Emean.shift=0,E.variance=1))
-lines(Egammaplot, col=2, lwd=2)
-Elnormplot=density(lnorm.plot.f(Nrand=Nrand, Edist.a=Elnorm.a, Edist.b=Elnorm.b,Emean.shift=0,E.var.inc=1))
-lines(Elnormplot, col=3, lwd=2)
-legend("topright", legend=c("Normal","Gamma","Lognormal"), col=1:3, lwd=2,bty="n")
+plot(Enormplot, xlab=expression('NAO'), ylab="Density",lwd=2,main="")
 
 #=============================================================================
 # Develop the E projection values based on your choice of projection parameters
@@ -259,16 +228,16 @@ Eproj= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
                    Emean.shift=Emean.shift,
                    proj.years=proj.years, N)
 
-# Shift to a warmer mean
-Emean.shift.warm=0.5
-Eproj.warm= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
-                        Emean.shift=Emean.shift.warm,
+# Shift to a higher mean (this is nao, not necessarily warmer)
+Emean.shift.higher=0.5
+Eproj.higher= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
+                        Emean.shift=Emean.shift.higher,
                         proj.years=proj.years, N)
 
-# Shift to a cooler mean
-Emean.shift.cold=-0.5
-Eproj.cold= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
-                        Emean.shift=Emean.shift.cold,
+# Shift to a lower mean
+Emean.shift.lower=-0.5
+Eproj.lower= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b,
+                        Emean.shift=Emean.shift.lower,
                         proj.years=proj.years, N)
 
 # Increase the variance
@@ -283,12 +252,12 @@ Nrand=1000000
 Edist.a=Enorm$estimate[1]
 Edist.b=Enorm$estimate[2]
 Ebase=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1))
-Ewarm=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.warm,E.var.inc=1))
-Ecold=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.cold,E.var.inc=1))
+Ehigher=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.higher,E.var.inc=1))
+Elower=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=Emean.shift.lower,E.var.inc=1))
 Evar=density(norm.plot.f(Nrand=Nrand, Edist.a=Edist.a, Edist.b=Edist.b,Emean.shift=0,E.var.inc=1.5))
-plot(Ebase, xlab=expression('Temperature('^o*C*')'), ylab="Density",xlim=c(0,6),lwd=2,main="")
-lines(Ewarm, lwd=2,col="red")
-lines(Ecold, lwd=2,col="blue")
+plot(Ebase, xlab=expression('NAO'), ylab="Density",lwd=2,main="")
+lines(Ehigher, lwd=2,col="red")
+lines(Elower, lwd=2,col="blue")
 lines(Evar, lwd=2,col="green")
 
 #==========================================================================
@@ -306,31 +275,10 @@ add.resids # default is to add residuals
 
 PBproj= PB.for.projection.f(PvsE=PvsE,Eproj,add.residuals=add.resids)
 PBproj.null= PB.for.projection.f(PvsE=PvsE.null,Eproj,add.residuals=add.resids)
-PBproj.warm= PB.for.projection.f(PvsE=PvsE,Eproj.warm,add.residuals=add.resids)
-PBproj.cold= PB.for.projection.f(PvsE=PvsE,Eproj.cold,add.residuals=add.resids)
+PBproj.higher= PB.for.projection.f(PvsE=PvsE,Eproj.higher,add.residuals=add.resids)
+PBproj.lower= PB.for.projection.f(PvsE=PvsE,Eproj.lower,add.residuals=add.resids)
 PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
 
-#View(PBproj)
-
-# What does this function do?
-# Basically, makes a prediction of PB based on PvsE prediction
-# Adds residuals or not
-
-# PB.for.projection.f= function(PvsE, Eproj, add.residuals=add.resids){
-#   median.prediction= Eproj*-9999
-#   for (i in 1:ncol(Eproj)){
-#     newdat= Eproj[,i]
-#     median.prediction[,i]= predict(PvsE, newdata=data.frame(E=newdat))
-#   }
-#   error.prediction= PvsE.resids.f(PvsE,proj.years=nrow(Eproj),N=ncol(Eproj))*add.residuals
-#   PB.prediction= median.prediction+error.prediction
-#   PB.prediction
-# }
-
-# PvsE.resids.f= function(PvsE, proj.years, N){
-#   resids= matrix(sample(residuals(PvsE),proj.years*N,replace=T),ncol=N,nrow=proj.years)
-#   resids
-# }
 
 # The distribution of the P/B values for the future projections.
 # It is the P/B that results by sampling E distribution function to
@@ -338,18 +286,18 @@ PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
 # if desired. The P/B distribution is then determined by running sampled
 # E value through the fitted P/B vs E relationship.
 plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey")
-lines(density(PBproj.cold),lwd=2,col="blue")
-lines(density(PBproj.warm),lwd=2,col="red")
+lines(density(PBproj.lower),lwd=2,col="blue")
+lines(density(PBproj.higher),lwd=2,col="red")
 lines(density(PBproj.var),lwd=2,col="green")
 lines(density(PBproj),lwd=2,col="black")
-legend("topright",legend=c("Null", "Base","Cold","Warm","Var"), col=c("grey", "black","blue","red","green"), lty=1,lwd=2,bty="n")
+legend("topright",legend=c("Null", "Base","lower","higher","Var"), col=c("grey", "black","blue","red","green"), lty=1,lwd=2,bty="n")
 
 #=========================================================================
 # Fishing strategy
 # In this case is the the mean exploitation (Index corrected by catchability) during the last five years.
 # This function just takes the mean relative F from the PB object
 # or turns off fishing for the stated years if moratorium=T
-Fstrat= F.strategy(PB, 2014:2018, moratorium=F)
+Fstrat= F.strategy(PB, 2015:2017, moratorium=F)
 Fstrat
 
 #=========================================================================
@@ -363,97 +311,16 @@ Fstrat
 # Uses the reference Fstrat
 Bproj= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj, Fstrat, K=K, theta=1)
 
-# Performs the projection with climate scenario and fishing strategy
-# @param PB the data and model fit coming from applying the PB model (PB.f)
-# @param Bstart.mult the proporption of the last data year's biomass
-#     used to start the projection
-# @param PBproj The matrix of projected PB values based on climate scenario
-# @param Fstrat The fishing strategy
-# @param K The multiplier of maximum observed biomass to be carrying capacity
-# @param theta the skewness of the density dependence factor (1=Schaeffer)
-
-# Density independent
-# Bt+1 = Bt + Bt*PBt - Bt*Ft
-
-# Density dependent
-# If PB < 0:  Bt+1 = Bt + Bt*PBt - Bt*Ft
-# If PB >= 0: Bt+1 = Bt + Bt*PBt*(1-(Bt/K)^theta) - Bt*Ft
-
-# projection.f= function(PB, Bstart.mult, PBproj, Fstrat, K, theta=1){
-#   if(theta<=0) stop('theta must be >0 and probably should be <=1')
-#   K= K*max(PB$Index.q, na.rm=T)
-#   N= ncol(PBproj)
-#   proj.years= nrow(PBproj)
-#   proj.di= matrix(ncol=N,nrow=proj.years)
-#   proj.dd= matrix(ncol=N,nrow=proj.years)
-#   for (MC in 1:N){
-#     B.di= tail(PB$Index.q,1)*Bstart.mult
-#     B.dd= B.di
-#     for (i in 1:proj.years){
-#       PB.ratio= PBproj[i,MC]
-#       #Bt+1=Bt+Bt*PBt-Ct
-#       B.di= max(c(.001,(B.di+B.di*PB.ratio-B.di*Fstrat))) #density independent
-#       if(PB.ratio<0) B.dd= max(c(.001,(B.dd+B.dd*PB.ratio-B.dd*Fstrat)))
-#       if(PB.ratio>=0) B.dd= max(c(.001,(B.dd+B.dd*PB.ratio*(1-(B.dd/K)^theta)-B.dd*Fstrat)))
-#       proj.di[i,MC]= B.di
-#       proj.dd[i,MC]= B.dd
-#     }
-#   }
-#   proj.out= list(proj.di=proj.di,proj.dd=proj.dd)
-#   proj.out
-# }
-
 # Now get the final Biomass under a sequence of F values for each
 #   climate scenario (the 2000 MC runs)
 # RF added Bstart.mult and theta args, which were missing and caused errors
 # Fout isn't a very good name for this output, which is actually final Biomass scenarios
 Fout= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
-# View(Fout$f) # the sequence of constant F for the projections
-# View(Fout$f.di) # the final biomass (density independent) under each F
-# View(Fout$f.dd) # the final biomass (density dependent) under each F
 
 # Now get the probability of being at or above the reference B value
 # at the end of the time frame specified.
 PofF= PofF.f(PB,Fout,ref.pt=ref.pt)
 View(PofF)
-# @param PB the PB model output
-# @param Fprob the output of Fseq.f, i.e. the final B value at the end of a specified period
-# @param ref.pt the multiplier of the reference period giving the
-#   reference point. Only required if using reference years.
-# @param ref.pt.fixed the Blim or limit reference point you want to use
-
-ref.pt
-
-# PofF.f=function (PB, Fprob, ref.pt = NULL , ref.pt.fixed = NULL) {
-#   if (all(is.null(ref.pt.fixed) , is.null(ref.pt))) stop('At least one Reference Point must be specified.')
-#   if (!is.null(ref.pt.fixed)) Bref = ref.pt.fixed else
-#     Bref = Bref.f(PB = PB, ref.pt.multiplier = ref.pt) # gets average biomass for ref years * multiplier
-#   # Combine the ref biomass (col 1) and all the biomasses under each F (cols 2:2001)
-#   obj.prob.di = cbind(rep(Bref, nrow(Fprob$f.di)), Fprob$f.di)
-#   obj.prob.dd = cbind(rep(Bref, nrow(Fprob$f.dd)), Fprob$f.dd)
-#   P.di = vector(length = nrow(obj.prob.di)) #Make vector for probs
-#   P.dd = P.di
-#   N = ncol(Fprob$f.di)
-#   # For each F scenario (row) get the prob of being above the ref biomass
-#   for (i in 1:nrow(obj.prob.di)) {
-#     vec.di = obj.prob.di[i, ] #ith row of matrix
-#       # (i.e. F scenario i, where the first element is the ref biomass)
-#     P.di[i] = 1 - rank(vec.di)[1]/N  # get the rank of the ref biomass and
-#       # convert to probability by dividing by N. This gives the proportion
-#       # of trials above the ref. Shouldn't it be divided by N+1?
-#     vec.dd = obj.prob.dd[i, ]
-#     P.dd[i] = 1 - rank(vec.dd)[1]/N
-#   }
-#   years = (tail(PB$Year, 1) + 1):(tail(PB$Year, 1) + length(P.di)) #what for?
-#   P = data.frame(f = Fprob$f, P.di = P.di, P.dd = P.dd)
-#   P
-# }
-#
-# Bref.f= function(PB, ref.pt.multiplier){
-#   Bref= ref.pt.multiplier*sum(PB$Index.q * PB$refererence.years,na.rm=T)/sum(PB$refererence.years,na.rm=T)
-#   Bref
-# }
-
 # Now have the probability of being above the reference biomass
 # in the final projection year for a set of constant F policies (PofF)
 #=============================================================================
@@ -481,27 +348,27 @@ PofF.null= PofF.f(PB,Fout.null,ref.pt=ref.pt)
 Bproj.summary.null= Bproj.summary.f(PB,Bproj.null,PBproj.null,Eproj)
 P.null= rankprob.f(Bproj.null,PB,ref.pt)
 
-# Warm
-Emean.shift.warm=0.5
-Eproj.warm= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.warm, proj.years=proj.years, N)
-PBproj.warm= PB.for.projection.f(PvsE=PvsE,Eproj.warm,add.residuals=add.resids)
-Bproj.warm= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.warm, Fstrat, K=K, theta=1)
+# higher
+Emean.shift.higher=0.5
+Eproj.higher= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.higher, proj.years=proj.years, N)
+PBproj.higher= PB.for.projection.f(PvsE=PvsE,Eproj.higher,add.residuals=add.resids)
+Bproj.higher= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.higher, Fstrat, K=K, theta=1)
 # RF added Bstart.mult and theta args
-Fout.warm= Fseq.f(PB, Bstart.mult=Bstart.mult, PBproj=PBproj.warm,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
-PofF.warm= PofF.f(PB,Fout.warm,ref.pt=ref.pt)
-Bproj.summary.warm= Bproj.summary.f(PB,Bproj.warm,PBproj.warm,Eproj.warm)
-P.warm= rankprob.f(Bproj.warm,PB,ref.pt)
+Fout.higher= Fseq.f(PB, Bstart.mult=Bstart.mult, PBproj=PBproj.higher,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
+PofF.higher= PofF.f(PB,Fout.higher,ref.pt=ref.pt)
+Bproj.summary.higher= Bproj.summary.f(PB,Bproj.higher,PBproj.higher,Eproj.higher)
+P.higher= rankprob.f(Bproj.higher,PB,ref.pt)
 
-# Cold
-Emean.shift.cold=-0.5
-Eproj.cold= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.cold, proj.years=proj.years, N)
-PBproj.cold= PB.for.projection.f(PvsE=PvsE,Eproj.cold,add.residuals=add.resids)
-Bproj.cold= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.cold, Fstrat, K=K, theta=1)
+# lower
+Emean.shift.lower=-0.5
+Eproj.lower= Eprojnorm.f(Edist.a=Edist.a, Edist.b=Edist.b, Emean.shift=Emean.shift.lower, proj.years=proj.years, N)
+PBproj.lower= PB.for.projection.f(PvsE=PvsE,Eproj.lower,add.residuals=add.resids)
+Bproj.lower= projection.f(PB=PB, Bstart.mult=Bstart.mult, PBproj=PBproj.lower, Fstrat, K=K, theta=1)
 # RF added Bstart.mult and theta arg
-Fout.cold= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj.cold,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
-PofF.cold= PofF.f(PB,Fout.cold,ref.pt=ref.pt)
-Bproj.summary.cold= Bproj.summary.f(PB,Bproj.cold,PBproj.cold,Eproj.cold)
-P.cold= rankprob.f(Bproj.cold,PB,ref.pt)
+Fout.lower= Fseq.f(PB,Bstart.mult=Bstart.mult,PBproj=PBproj.lower,Fseq=fs,time.frame=time.frame, N=N, K=K, theta=1)
+PofF.lower= PofF.f(PB,Fout.lower,ref.pt=ref.pt)
+Bproj.summary.lower= Bproj.summary.f(PB,Bproj.lower,PBproj.lower,Eproj.lower)
+P.lower= rankprob.f(Bproj.lower,PB,ref.pt)
 
 # Increase variance
 Emean.shift=0.0
@@ -532,15 +399,9 @@ Edist.b=Enorm$estimate[2]
 # This function just loops through the Emean.shifts vector to get normal
 # distributions of the E object for the projections using Eprojnorm.f()
 # Produces a list of E matrices proj.years X N
-# So we have N projections for each series from cooler to warmer
+# So we have N projections for each series from cooler to higherer
 ECCF= Eproj.list.f(Emean.shifts=Emean.shifts, N=N.CCF, proj.years=proj.years, Edist.a=Edist.a,
                    Edist.b=Edist.b)
-
-# Note it says in the function description that the mean.shift argument is for the
-#  gamma dist but the function Eproj.list.f calls Eprojnorm.f, which is the
-#  normal distribution. It also has parameters Edist.a and Edist.b instead
-#  of rate and shape. Looks like it would be easy to change for the gamma
-# or lognormal distributions
 
 # Now get the predicted PB for all those E series
 # Uses the PvsE predictive relationship from earlier, with all the E
@@ -553,7 +414,7 @@ PBCCF= PBproj.list.f(PvsE=PvsE, Eprojection=ECCF)
 #  in the final year across the range of Fs ... for EACH Emean shift scenario
 # This is a matrix like the P matrix above, but all the climate scenarios
 # are rbinded.
-# It's essentially like rbinding P, P.cold, P.warm etc but across a big
+# It's essentially like rbinding P, P.lower, P.higher etc but across a big
 # range of Emean shifts instead of just +0.5 and -0.5
 CCF.raw= P.R.for.EF.f(E.CCF=ECCF, PB.CCF=PBCCF, Fs=fs, PB=PB, ref.pt=ref.pt, Bstart.mult=Bstart.mult,
                       K=K, theta=theta)
@@ -599,38 +460,38 @@ lines(Bproj.summary$year,Bproj.summary$B.di.CI.med,lwd=2)
 lines(Bproj.summary$year,Bproj.summary$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary$year,Bproj.summary$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary$year,rep(Bref,length(Bproj.summary$year)),lty=2)
-legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+legend("topleft",legend="Mean NAO",bty="n",cex=0.75)
 yaxis2.f(Bproj.summary$year,Bproj.summary$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
-# Future E is warmer ... mean of normal dist shifts by 0.5 deg
+# Future E is higherer ... mean of normal dist shifts by 0.5 deg
 Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
-plot(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.null$B.di.CI.high)),xlab="",ylab="")
-confint(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.low,Bproj.summary.warm$B.di.CI.high,col="grey")
-confint(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.low,Bproj.summary.warm$B.dd.CI.high,col="lightblue")
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.med,lwd=2,col="blue")
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.low,lwd=1,lty=2,col="blue")
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.dd.CI.high,lwd=1,lty=2,col="blue")
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.med,lwd=2)
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.low,lwd=1,lty=2,col="black")
-lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.high,lwd=1,lty=2,col="black")
-lines(Bproj.summary.warm$year,rep(Bref,length(Bproj.summary.warm$year)),lty=2)
-legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
-yaxis2.f(Bproj.summary.warm$year,Bproj.summary.warm$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+plot(Bproj.summary.higher$year,Bproj.summary.higher$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.null$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.higher$year,Bproj.summary.higher$B.di.CI.low,Bproj.summary.higher$B.di.CI.high,col="grey")
+confint(Bproj.summary.higher$year,Bproj.summary.higher$B.dd.CI.low,Bproj.summary.higher$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.di.CI.med,lwd=2)
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.higher$year,Bproj.summary.higher$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.higher$year,rep(Bref,length(Bproj.summary.higher$year)),lty=2)
+legend("topleft",legend="NAO higher",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary.higher$year,Bproj.summary.higher$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
 # Future E is cooler ... mean of normal dist shifts by -0.5 deg
 Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
-plot(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.cold$B.di.CI.high)),xlab="",ylab="")
-confint(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.low,Bproj.summary.cold$B.di.CI.high,col="grey")
-confint(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.low,Bproj.summary.cold$B.dd.CI.high,col="lightblue")
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.med,lwd=2,col="blue")
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.low,lwd=1,lty=2,col="blue")
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.dd.CI.high,lwd=1,lty=2,col="blue")
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.med,lwd=2)
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.low,lwd=1,lty=2,col="black")
-lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.high,lwd=1,lty=2,col="black")
-lines(Bproj.summary.cold$year,rep(Bref,length(Bproj.summary.cold$year)),lty=2)
-legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
-yaxis2.f(Bproj.summary.cold$year,Bproj.summary.cold$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+plot(Bproj.summary.lower$year,Bproj.summary.lower$B.di.CI.med,type="n",ylim=c(0,max(Bproj.summary.lower$B.di.CI.high)),xlab="",ylab="")
+confint(Bproj.summary.lower$year,Bproj.summary.lower$B.di.CI.low,Bproj.summary.lower$B.di.CI.high,col="grey")
+confint(Bproj.summary.lower$year,Bproj.summary.lower$B.dd.CI.low,Bproj.summary.lower$B.dd.CI.high,col="lightblue")
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.dd.CI.med,lwd=2,col="blue")
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.dd.CI.low,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.dd.CI.high,lwd=1,lty=2,col="blue")
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.di.CI.med,lwd=2)
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.di.CI.low,lwd=1,lty=2,col="black")
+lines(Bproj.summary.lower$year,Bproj.summary.lower$B.di.CI.high,lwd=1,lty=2,col="black")
+lines(Bproj.summary.lower$year,rep(Bref,length(Bproj.summary.lower$year)),lty=2)
+legend("topleft",legend="NAO lower",bty="n",cex=0.75)
+yaxis2.f(Bproj.summary.lower$year,Bproj.summary.lower$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
 # E variance increases ... sd of normal dist shifts by 1.5 deg
 Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
@@ -644,10 +505,10 @@ lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.med,lwd=2)
 lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary.var$year,rep(Bref,length(Bproj.summary.var$year)),lty=2)
-legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+legend("topleft",legend="NAO sd x 1.5",bty="n",cex=0.75)
 yaxis2.f(Bproj.summary.var$year,Bproj.summary.var$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
-# Not sure I agree with the summary that colder temperatures are worse for
+# Not sure I agree with the summary that lowerer temperatures are worse for
 # the stock. Looks a bit better than the null and mean cases to me
 
 # Now look at the probability that the biomass is greater than the
@@ -670,28 +531,28 @@ box()
 # Mean temperature
 matplot(P[,1],P[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+legend("topleft",legend="Mean NAO",bty="n",cex=0.75)
 abline(h=1-risk,lty=2,col="grey")
 box()
 
-# Warm
-matplot(P.warm[,1],P.warm[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+# higher
+matplot(P.higher[,1],P.higher[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
+legend("topleft",legend="NAO higher",bty="n",cex=0.75)
 abline(h=1-risk,lty=2,col="grey")
 box()
 
-# Cold
-matplot(P.cold[,1],P.cold[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+# lower
+matplot(P.lower[,1],P.lower[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
+legend("topleft",legend="NAO lower",bty="n",cex=0.75)
 abline(h=1-risk,lty=2,col="grey")
 box()
 
 # Var
 matplot(P.var[,1],P.var[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+legend("topleft",legend="NAO sd x 1.5",bty="n",cex=0.75)
 abline(h=1-risk,lty=2,col="grey")
 box()
 
@@ -702,7 +563,7 @@ box()
 # Uses a simple gam to predict fishing mortality that will meet
 # stated risk tolerance level
 
-# So in the warm and var cases, there is no fishing level that will
+# So in the higher and var cases, there is no fishing level that will
 # rebuild  the stock with 50% prob of being above F target
 
 # Null case (no E vs PB relationship)
@@ -720,31 +581,31 @@ box()
 matplot(PofF[,1],PofF[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
         type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+legend("topleft",legend="Mean NAO",bty="n",cex=0.75)
 di.intersection= predict(gam(f~s(P.di),data=PofF),newdata=data.frame(P.di=1-risk))
 dd.intersection= predict(gam(f~s(P.dd),data=PofF),newdata=data.frame(P.dd=1-risk))
 rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
 rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
 box()
 
-# warm
-matplot(PofF.warm[,1],PofF.warm[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+# higher
+matplot(PofF.higher[,1],PofF.higher[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
         type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
-di.intersection= predict(gam(f~s(P.di),data=PofF.warm),newdata=data.frame(P.di=1-risk))
-dd.intersection= predict(gam(f~s(P.dd),data=PofF.warm),newdata=data.frame(P.dd=1-risk))
+legend("topleft",legend="NAO higher",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.higher),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.higher),newdata=data.frame(P.dd=1-risk))
 rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
 rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
 box()
 
-# cold
-matplot(PofF.cold[,1],PofF.cold[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
+# lower
+matplot(PofF.lower[,1],PofF.lower[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
         type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
-di.intersection= predict(gam(f~s(P.di),data=PofF.cold),newdata=data.frame(P.di=1-risk))
-dd.intersection= predict(gam(f~s(P.dd),data=PofF.cold),newdata=data.frame(P.dd=1-risk))
+legend("topleft",legend="NAO lower",bty="n",cex=0.75)
+di.intersection= predict(gam(f~s(P.di),data=PofF.lower),newdata=data.frame(P.di=1-risk))
+dd.intersection= predict(gam(f~s(P.dd),data=PofF.lower),newdata=data.frame(P.dd=1-risk))
 rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
 rect(0,0,dd.intersection,1-risk,lty=2,border="darkgrey")
 box()
@@ -753,7 +614,7 @@ box()
 matplot(PofF.var[,1],PofF.var[,-1],xlab="Exploitation rate", ylab="Probability of being at or above biomass objective in 10 years" ,ylim=c(0,1),
         type="l",lwd=3,xaxs="i",yaxs="i",lty=1,col=c("black","blue"))
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+legend("topleft",legend="NAO sd x 1.5",bty="n",cex=0.75)
 di.intersection= predict(gam(f~s(P.di),data=PofF.var),newdata=data.frame(P.di=1-risk))
 dd.intersection= predict(gam(f~s(P.dd),data=PofF.var),newdata=data.frame(P.dd=1-risk))
 rect(0,0,di.intersection,1-risk,lty=2,border="darkgrey")
@@ -768,7 +629,7 @@ box()
 # the blue line overlay
 
 CCF.contour=interp(x=CCF.raw$E.med,y=CCF.raw$Fval,z=CCF.raw$P.di)
-contour(CCF.contour,xlab="Median temperature (°C)",ylab="Exploitation rate",xaxs="i",yaxs="i")
+contour(CCF.contour,xlab="Median NAO",ylab="Exploitation rate",xaxs="i",yaxs="i")
 risk.equi.exp.rate.di= contourLines(CCF.contour$x,CCF.contour$y,CCF.contour$z,nlevels=1,levels=1-risk)
 confint(risk.equi.exp.rate.di[[1]]$x,risk.equi.exp.rate.di[[1]]$y*0,risk.equi.exp.rate.di[[1]]$y,col=rgb(0, 1, 0,0.5))
 lines(PB$E,PB$F.rel,col="slateblue",lwd=1)
@@ -776,12 +637,4 @@ points(PB$E,PB$F.rel,col="slateblue",pch=20)
 year.endpoints= match(range(PB$Year),PB$Year)
 points(PB$E[year.endpoints],PB$F.rel[year.endpoints],pch=22,cex=3,bg="white",col="slateblue")
 text(PB$E[year.endpoints],PB$F.rel[year.endpoints],PB$Year[year.endpoints],cex=.5)
-
-# Why are the probability contours dome shaped?
-# Must be because there is a dome(ish) shaped relationship between
-# E and productivity
-# So at the extremes, we have a 50% chance of achieving the target with
-# no fishing at either 1.5 degrees or 3.1 degrees. Between 2 and 2.8 degrees
-# We can fish at ~0.08 with 50% of achieving the target. Outside that temp
-# range we have to reduce fishing effort.
 
