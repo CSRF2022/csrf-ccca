@@ -10,20 +10,28 @@
 library(ccca)
 library(tidyverse)
 
-# the parameters and data come with the ccca package
-# the mapply function puts them in the global environment
-# Can change the values (e.g., params$Emean.shift=0.5)
-data(params)
-mapply(assign, names(params), params, MoreArgs=list(envir = globalenv()))
-params
-
-# The data are in a file called turbot.rda
+# The data are in a file called ncod.rda
 # The package pre-loads the data
 # (several other species files in the package data folder)
 # Model needs survey, catch and an E variable (e.g. Temp)
 #View(turbot)
 View(ncod)
 #View(ShrimpGSL)
+
+# the parameters and data come with the ccca package
+# the mapply function puts them in the global environment
+# Can change the values (e.g., params$Emean.shift=0.5)
+View(params)
+
+# change some things in params
+params$ref.years <- 1981:1989 # pick some years with average index before 1992
+params$risk <- 0.75 # Set a higher prob of being above Blim
+params$K <- 5 # assume stock more depleted than turbot
+
+data(params)
+mapply(assign, names(params), params, MoreArgs=list(envir = globalenv()))
+params
+
 
 # Note there can't be missing years but there is no check for it
 # But there can be NAs for some variables in some years
@@ -776,97 +784,4 @@ text(PB$E[year.endpoints],PB$F.rel[year.endpoints],PB$Year[year.endpoints],cex=.
 # no fishing at either 1.5 degrees or 3.1 degrees. Between 2 and 2.8 degrees
 # We can fish at ~0.08 with 50% of achieving the target. Outside that temp
 # range we have to reduce fishing effort.
-
-
-#==========================================================================
-#========== EXTRA PLOTS ETC ===============================================
-# Plot the predicted E variable against time
-plot(PB$Year,PB$E,type="l", xlim=c(PB$Year[1],max(PB$Year)+10),ylim=c(0,1.1*max(PB$E)))
-matplot(2020:2029,Eproj, type="l")
-
-EMed <- apply(Eproj,1,median)
-E975 <- apply(Eproj,1,quantile,probs=0.975)
-E025 <- apply(Eproj,1,quantile,probs=0.025)
-
-EMed.warm <- apply(Eproj.warm,1,median)
-E975.warm <- apply(Eproj.warm,1,quantile,probs=0.975)
-E025.warm <- apply(Eproj.warm,1,quantile,probs=0.025)
-
-EMed.cold <- apply(Eproj.cold,1,median)
-E975.cold <- apply(Eproj.cold,1,quantile,probs=0.975)
-E025.cold <- apply(Eproj.cold,1,quantile,probs=0.025)
-
-EMed.var <- apply(Eproj.var,1,median)
-E975.var <- apply(Eproj.var,1,quantile,probs=0.975)
-E025.var <- apply(Eproj.var,1,quantile,probs=0.025)
-
-E_projyears <- cbind(E025,EMed,E975) %>%
-  as.data.frame() %>%
-  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
-  select(Year,E025,EMed,E975)
-
-E_projyears.warm <- cbind(E025.warm,EMed.warm,E975.warm) %>%
-  as.data.frame() %>%
-  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
-  select(Year,E025.warm,EMed.warm,E975.warm)
-
-E_projyears.cold <- cbind(E025.cold,EMed.cold,E975.cold) %>%
-  as.data.frame() %>%
-  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
-  select(Year,E025.cold,EMed.cold,E975.cold)
-
-E_projyears.var <- cbind(E025.var,EMed.var,E975.var) %>%
-  as.data.frame() %>%
-  mutate(Year=max(PB$Year+1):max(PB$Year+10)) %>%
-  select(Year,E025.var,EMed.var,E975.var)
-
-E_allyears <- PB %>%
-  select(Year,E) %>%
-  mutate(E025=E,EMed=E,E975=E) %>%
-  select(-E) %>%
-  rbind(E_projyears) %>%
-  ggplot() +
-  geom_ribbon(aes(x=Year, ymin=E025,ymax=E975),
-              colour="blue", fill="blue",alpha=0.5)+
-  theme_bw()+
-  ylim(0,4.5)
-E_allyears
-
-#Weird looking  plot. Basically temp can be anything in the range.
-
-E_allyears.warm <- PB %>%
-  select(Year,E) %>%
-  mutate(E025.warm=E,EMed.warm=E,E975.warm=E) %>%
-  select(-E) %>%
-  rbind(E_projyears.warm) %>%
-  ggplot() +
-  geom_ribbon(aes(x=Year, ymin=E025.warm,ymax=E975.warm),
-              colour="orange", fill="orange",alpha=0.5)+
-  theme_bw()+
-  ylim(0,5.)
-E_allyears.warm
-
-E_allyears.cold <- PB %>%
-  select(Year,E) %>%
-  mutate(E025.cold=E,EMed.cold=E,E975.cold=E) %>%
-  select(-E) %>%
-  rbind(E_projyears.cold) %>%
-  ggplot() +
-  geom_ribbon(aes(x=Year, ymin=E025.cold,ymax=E975.cold),
-              colour="green", fill="green",alpha=0.5)+
-  theme_bw()+
-  ylim(0,4.5)
-E_allyears.cold
-
-E_allyears.var <- PB %>%
-  select(Year,E) %>%
-  mutate(E025.var=E,EMed.var=E,E975.var=E) %>%
-  select(-E) %>%
-  rbind(E_projyears.var) %>%
-  ggplot() +
-  geom_ribbon(aes(x=Year, ymin=E025.var,ymax=E975.var),
-              colour="purple", fill="purple",alpha=0.5)+
-  theme_bw()+
-  ylim(0,6)
-E_allyears.var
 
