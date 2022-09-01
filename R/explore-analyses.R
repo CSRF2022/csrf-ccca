@@ -455,7 +455,7 @@ ref.pt
 # in the final projection year for a set of constant F policies (PofF)
 #=============================================================================
 
-# Now we seem to be back at the annual biomasses under Fstrat
+# Now we are back at the annual biomasses under Fstrat
 
 # Summarise the output of the projections by calculating quantiles
 #  and putting results in a dataframe.
@@ -561,10 +561,12 @@ View(CCF.raw)
 # results are recommended to be used (the last three figs of the readme at
 #  https://github.com/duplisea/ccca)
 
-# 1. Time series plots
+# 1. Time series plots (use the Fstrat fishing mortality)
 # The plot of the projection given your E scenario for both density
 #  independent and dependent models. The biomass reference level is
 #  depicted as the horizontal dashed line. Confidence intervals are 90%.
+# Because these are time series into the projection period, they use
+#   the Bproj object, which was projected with the Fstrat fishing mortality
 
 # Just look at one to begin with
 # The null case (no relationship between E and PB)
@@ -645,7 +647,54 @@ yaxis2.f(Bproj.summary.var$year,Bproj.summary.var$ E.CI.med,ylabel="",type="l",c
 # Not sure I agree with the summary that colder temperatures are worse for
 # the stock. Looks a bit better than the null and mean cases to me
 
+# Now look at the probability that the biomass is greater than the
+# reference level each year of the projection.
+# The horizontal dashed line represents the risk tolerance of not achieving
+# the objective. i.e. For the objective to be met, the biomass line
+# should be above the risk line at the end of the time.frame period specified
+# in the parameters list.
 
+# ** So these show the probabilities of stock recovery under the current
+#      F strategy **
+
+# Null case - no relationship between E and Production
+matplot(P.null[,1],P.null[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="Null",bty="n",cex=0.75)
+abline(h=1-risk,lty=2,col="grey")
+box()
+
+# Mean temperature
+matplot(P[,1],P[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+abline(h=1-risk,lty=2,col="grey")
+box()
+
+# Warm
+matplot(P.warm[,1],P.warm[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
+abline(h=1-risk,lty=2,col="grey")
+box()
+
+# Cold
+matplot(P.cold[,1],P.cold[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
+abline(h=1-risk,lty=2,col="grey")
+box()
+
+# Var
+matplot(P.var[,1],P.var[,-1],type='l',xlab="",ylab="",lwd=3,ylim=c(0,1),lty=1,col=c("black","blue"))
+legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
+legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
+abline(h=1-risk,lty=2,col="grey")
+box()
+
+#=============================================================================
+# Now we want the maximum fishing mortality that will achieve the
+# objective in the specified time period given the E scenario projected.
 
 
 
