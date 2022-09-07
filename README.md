@@ -17,6 +17,6 @@ https://doi.org/10.1371/journal.pone.0239503*
 
 See the publication above and readme file at https://github.com/duplisea/ccca for more information about the approach.
 
-See this repo READMEccca.rmd for example code
+See this repo READMEccca.rmd for example code. See this repo R/explore-analyses.R for more detailed notes on the worked Greenland Halibut example.
 
 
