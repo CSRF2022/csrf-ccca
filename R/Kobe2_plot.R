@@ -49,18 +49,34 @@ Kobe3.f= function(PB, E, Bref.multiplier=1, col1="blue", col2="red", offset=0.1,
   B.kobe= Index.q*Bref.multiplier/mean(Index.q[base])
   PB.kobe= PB$PB
 
-  plot(B.kobe,PB.kobe,type="b",pch="    ",xlab=expression("B/B"["base"]),ylab=expression("P/B"),ylim=c(-0.75,1.1*max(PB.kobe, na.rm=T)),xlim=c(0,1.1*max(B.kobe, na.rm=T)))
+  plot(B.kobe,PB.kobe,type="b",pch="    ",
+       xlab=expression("B/B"["base"]),ylab=expression("P/B"),
+       ylim=c(-0.75,1.1*max(PB.kobe, na.rm=T)),
+       xlim=c(0,1.1*max(B.kobe, na.rm=T)),cex.lab=1.5)
   E.categ= floor(E*4)/4 #quarter degree C categories
   tempcol=colorRampPalette(c(col1, col2))(length(E.kobe))
   temperaturecolours= tempcol[order(E.categ)]
   last.year= length(F.kobe)
   points(B.kobe,PB.kobe,pch=21,bg=temperaturecolours,col=temperaturecolours,cex=1)
-  points(B.kobe[1],PB.kobe[1],pch=21,bg=temperaturecolours[1],col=temperaturecolours[1],cex=3)
-  text(B.kobe[1],PB.kobe[1],PB$Year[1],col="white",cex=0.55,font=2)
-  points(B.kobe[last.year-1],PB.kobe[last.year-1],pch=21,bg=temperaturecolours[last.year-1],col=temperaturecolours[last.year-1],cex=3)
-  text(B.kobe[last.year-1],PB.kobe[last.year-1],PB$Year[last.year-1],col="white",cex=0.55,font=2)
-  text(B.kobe[2:(last.year-2)]+offset,PB.kobe[2:(last.year-2)]+offset,PB$Year[2:(last.year-2)],col=temperaturecolours[2:(last.year-2)],cex=0.55,font=2)
+  points(B.kobe[1],PB.kobe[1],pch=21,bg=temperaturecolours[1],col=temperaturecolours[1],cex=3.5)
+  text(B.kobe[1],PB.kobe[1],PB$Year[1],col="white",cex=0.65,font=2)
+  points(B.kobe[last.year-1],PB.kobe[last.year-1],pch=21,bg=temperaturecolours[last.year-1],col=temperaturecolours[last.year-1],cex=3.5)
+  text(B.kobe[last.year-1],PB.kobe[last.year-1],PB$Year[last.year-1],col="white",cex=.65,font=2)
+  text(B.kobe[2:(last.year-2)]+offset,PB.kobe[2:(last.year-2)]+offset,PB$Year[2:(last.year-2)],col=temperaturecolours[2:(last.year-2)],cex=1,font=2)
   abline(h=0,col="grey")
   abline(v=1,col="grey")
+}
 
+colramp.legend2 <- function (col1 = "red", col2 = "blue", ncol, xleft, ybottom,
+          xright, ytop, ...)
+{
+  tempcol = colorRampPalette(c(col1, col2))(ncol)
+  legend_image <- as.raster(matrix(tempcol, ncol = 1))
+  rasterImage(legend_image, xleft = xleft, ybottom = ybottom,
+              xright = xright, ytop = ytop)
+  rasterImage(legend_image, 12, 2, 13, 8)
+  text(xright * 1.02, ytop, labels = round(max(PB$E, na.rm = T),
+                                           1), cex = 1.5)
+  text(xright * 1.02, ybottom, labels = round(min(PB$E, na.rm = T),
+                                              1), cex = 1.5)
 }

@@ -90,8 +90,34 @@ Kobe2.f(PB=PB,E=PB$E, offset=0.075)
 colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.5, 3.5, 2.7, 4.5)
 
 # Make a Kobe plot of PB vs rel B
+png("Kobe_GreenlandHalibut.png",width = 960, height = 960)
 Kobe3.f(PB=PB,E=PB$E, offset=-0.05)
-colramp.legend(col1="red", col2="blue", ncol=length(PB$E), 2.8, 1.3, 3., 2.)
+colramp.legend2(col1="red", col2="blue", ncol=length(PB$E),
+               2.8, 1.3, 3., 2., cex=5)
+dev.off()
+
+# Make a timeseries of PB
+PBshort <- PB %>%
+  filter(Year<2019)
+col1="blue"
+col2="red"
+E.categ= floor(PBshort$E*4)/4 #quarter degree C categories
+tempcol=colorRampPalette(c(col1, col2))(length(PBshort$E))
+temperaturecolours= tempcol[order(E.categ)]
+
+g <- PBshort %>%
+  ggplot()+
+  geom_path(aes(x=Year, y=PB), size=1.25)+
+  geom_point(aes(x=Year, y=PB), colour=temperaturecolours, size=5)+
+  geom_hline(yintercept=0, linetype=2)+
+  theme_classic()+
+  ylab("P/B")+
+  theme(axis.text.x = element_text(size=12))+
+  theme(axis.text.y = element_text(size=12))+
+  theme(axis.title.x = element_text(size=14))+
+  theme(axis.title.y = element_text(size=14))
+g
+
 
 #=========================================================================
 
@@ -334,7 +360,7 @@ PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
 # simulate a future climate and while altering the mean and variance
 # if desired. The P/B distribution is then determined by running sampled
 # E value through the fitted P/B vs E relationship.
-plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey")
+plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey", xlim=c(-1,1))
 lines(density(PBproj.cold),lwd=2,col="blue")
 lines(density(PBproj.warm),lwd=2,col="red")
 lines(density(PBproj.var),lwd=2,col="green")
