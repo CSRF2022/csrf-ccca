@@ -325,7 +325,8 @@ lines(Evar, lwd=2,col="green")
 # If the P/B vs E model is biased, this bias will be more likely to be
 # carried forward if residuals are not sampled (=0).
 
-add.resids # default is to add residuals
+add.resids <- T # default is to add residuals
+#add.resids <- F # default is to add residuals
 
 PBproj= PB.for.projection.f(PvsE=PvsE,Eproj,add.residuals=add.resids)
 PBproj.null= PB.for.projection.f(PvsE=PvsE.null,Eproj,add.residuals=add.resids)
@@ -360,7 +361,7 @@ PBproj.var= PB.for.projection.f(PvsE=PvsE,Eproj.var,add.residuals=add.resids)
 # simulate a future climate and while altering the mean and variance
 # if desired. The P/B distribution is then determined by running sampled
 # E value through the fitted P/B vs E relationship.
-plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey", xlim=c(-1,1))
+plot(density(PBproj.null),xlab="P/B",ylab="Density",lwd=2,main="",col="grey", xlim=c(-0.5,2))
 lines(density(PBproj.cold),lwd=2,col="blue")
 lines(density(PBproj.warm),lwd=2,col="red")
 lines(density(PBproj.var),lwd=2,col="green")
