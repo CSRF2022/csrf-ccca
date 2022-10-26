@@ -609,7 +609,7 @@ lines(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.low,lwd=1,lty=2,col="bl
 lines(Bproj.summary.null$year,Bproj.summary.null$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary.null$year,rep(Bref,length(Bproj.summary.null$year)),lty=2)
 legend("topright",legend=c("Density independent","Density dependent"),lwd=2,col=c("black","blue"),bty="n",cex=0.75)
-legend("topleft",legend="Null",bty="n",cex=0.75)
+legend("topleft",legend="Null",bty="n",cex=1.5)
 
 # The base case (Future E is average)
 Bref= ref.pt*sum(PB$Index.q * PB$refererence.years)/sum(PB$refererence.years)
@@ -623,7 +623,7 @@ lines(Bproj.summary$year,Bproj.summary$B.di.CI.med,lwd=2)
 lines(Bproj.summary$year,Bproj.summary$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary$year,Bproj.summary$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary$year,rep(Bref,length(Bproj.summary$year)),lty=2)
-legend("topleft",legend="Mean temperature",bty="n",cex=0.75)
+legend("topleft",legend="Mean temperature",bty="n",cex=1.5)
 yaxis2.f(Bproj.summary$year,Bproj.summary$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
 # Future E is warmer ... mean of normal dist shifts by 0.5 deg
@@ -638,7 +638,7 @@ lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.med,lwd=2)
 lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary.warm$year,Bproj.summary.warm$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary.warm$year,rep(Bref,length(Bproj.summary.warm$year)),lty=2)
-legend("topleft",legend="0.5 °C warmer",bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C warmer",bty="n",cex=1.5)
 yaxis2.f(Bproj.summary.warm$year,Bproj.summary.warm$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
 # Future E is cooler ... mean of normal dist shifts by -0.5 deg
@@ -653,7 +653,7 @@ lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.med,lwd=2)
 lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary.cold$year,Bproj.summary.cold$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary.cold$year,rep(Bref,length(Bproj.summary.cold$year)),lty=2)
-legend("topleft",legend="0.5 °C colder",bty="n",cex=0.75)
+legend("topleft",legend="0.5 °C colder",bty="n",cex=1.5)
 yaxis2.f(Bproj.summary.cold$year,Bproj.summary.cold$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
 
 # E variance increases ... sd of normal dist shifts by 1.5 deg
@@ -668,8 +668,8 @@ lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.med,lwd=2)
 lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.low,lwd=1,lty=2,col="black")
 lines(Bproj.summary.var$year,Bproj.summary.var$B.di.CI.high,lwd=1,lty=2,col="black")
 lines(Bproj.summary.var$year,rep(Bref,length(Bproj.summary.var$year)),lty=2)
-legend("topleft",legend="sd x 1.5",bty="n",cex=0.75)
-yaxis2.f(Bproj.summary.var$year,Bproj.summary.var$ E.CI.med,ylabel="",type="l",cex=1,,lwd=2,lty=1,col="red")
+legend("topleft",legend="sd x 1.5",bty="n",cex=1.5)
+yaxis2.f(Bproj.summary.var$year,Bproj.summary.var$ E.CI.med,ylabel="",type="l",cex=1,lwd=2,lty=1,col="red")
 
 # Not sure I agree with the summary that colder temperatures are worse for
 # the stock. Looks a bit better than the null and mean cases to me
